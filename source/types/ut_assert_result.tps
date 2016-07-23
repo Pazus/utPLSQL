@@ -1,9 +1,8 @@
-create or replace type ut_assert_result as object
+create or replace type ut_assert_result under ut_assert_result_base
 (
-  result  integer(1),
-  message varchar2(4000 char),
-
-  member function result_to_char(self in ut_assert_result) return varchar2
+  overriding member procedure add_element( self in out nocopy ut_assert_result, an_assertion ut_assert_result_base ),
+  overriding member function get_element( a_position integer ) return ut_assert_result_base,
+  overriding member function get_elements_count return integer
 )
 not final
 /

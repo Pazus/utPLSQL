@@ -1,6 +1,6 @@
 --This shows how the interna test engine works to test a single package.
 --No tables are used for this and exceptions are handled better.
-Clear Screen
+--Clear Screen
 Set Serveroutput On Size Unlimited format truncated
 set echo off
 --install the example unit test packages
@@ -9,7 +9,6 @@ set echo off
 
 declare
   simple_test ut_test;
-  reporter    ut_suite_reporter;
 begin
 
   simple_test := ut_test(a_object_name        => 'ut_exampletest'
@@ -19,7 +18,8 @@ begin
                         ,a_setup_procedure    => 'setup'
                         ,a_teardown_procedure => 'teardown');
 
-  reporter := ut_dbms_output_suite_reporter;
-  simple_test.execute(reporter);
+  simple_test.execute(ut_dbms_output_suite_reporter);
 end;
 /
+
+drop package ut_exampletest;

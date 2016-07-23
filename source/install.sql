@@ -1,3 +1,4 @@
+@@types/ut_assert_result_base.tps
 @@types/ut_test_call_params.tps
 @@types/ut_assert_result.tps
 @@types/ut_assert_list.tps
@@ -13,6 +14,7 @@
 @@types/ut_dbms_output_suite_reporter.tps
 @@ut_utils.pks
 @@ut_utils.pkb
+@@types/ut_assert_result_base.tpb
 @@types/ut_assert_result.tpb
 @@types/ut_execution_result.tpb
 @@types/ut_test.tpb

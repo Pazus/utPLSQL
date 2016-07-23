@@ -25,3 +25,5 @@ drop type ut_assert_list;
 drop type ut_assert_result;
 
 drop type ut_test_call_params;
+
+drop type ut_assert_result_base;
