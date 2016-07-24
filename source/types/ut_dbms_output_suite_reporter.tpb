@@ -42,7 +42,7 @@ create or replace type body ut_dbms_output_suite_reporter is
   overriding member procedure end_assert(self in out nocopy ut_dbms_output_suite_reporter, an_assert ut_assert_result)as
   begin
       print(result_to_char( an_assert.result ) ||
-            ', ' ||an_assert.message ||
+            ', ' ||an_assert.name ||
             ', expected: ' || an_assert.expected ||
             ', actual: ' || an_assert.actual
            );

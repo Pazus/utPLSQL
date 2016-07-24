@@ -1,19 +1,14 @@
 create or replace type body ut_assert_result is
   
-  overriding member procedure add_element( self in out nocopy ut_assert_result, an_assertion ut_assert_result_base ) as
+  constructor function ut_assert_result(self in out nocopy ut_assert_result, a_result integer, a_name varchar2, an_expected varchar2, an_actual varchar2, an_end_time timestamp with time zone) return self as result as
   begin
-    null;
+    self.result := a_result;
+    self.name := a_name;
+    self.expected := an_expected;
+    self.actual := an_actual;
+    self.end_time := an_end_time;
+    return;
   end;
 
-  overriding member function get_element( a_position integer ) return ut_assert_result_base as
-  begin
-    return self;
-  end;
-
-  overriding member function get_elements_count return integer as
-  begin
-    return 1;
-  end;
-  
 end;
 /

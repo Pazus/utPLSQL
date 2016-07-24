@@ -39,9 +39,9 @@ begin
     dbms_output.put_line('Test:' || test_item.call_params.object_name || '.' || test_item.call_params.test_procedure);
     dbms_output.put_line('Result: ' || test_item.execution_result.result);
     dbms_output.put_line('Assert Results:');
-    for i in 1 .. test_item.execution_result.get_elements_count loop
-      dbms_output.put_line(i || ' - result: ' || test_item.execution_result.get_element(i).result);
-      dbms_output.put_line(i || ' - Message: ' || test_item.execution_result.get_element(i).message);
+    for i in 1 .. test_item.execution_result.executions.count loop
+      dbms_output.put_line(i || ' - result: ' || test_item.execution_result.executions(i).result);
+      dbms_output.put_line(i || ' - Message: ' || test_item.execution_result.executions(i).name);
     end loop;
   end loop;
   dbms_output.put_line('---------------------------------------------------');

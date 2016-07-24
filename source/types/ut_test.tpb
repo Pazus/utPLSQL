@@ -31,7 +31,6 @@ create or replace type body ut_test is
     reporter := execute(reporter);
   end;
   overriding member function execute(self in out nocopy ut_test, a_reporter ut_suite_reporter) return ut_suite_reporter is
-    params_valid boolean;
     reporter ut_suite_reporter := a_reporter;
   begin
     if reporter is not null then
@@ -43,11 +42,9 @@ create or replace type body ut_test is
       dbms_output.put_line('ut_test.execute');
       $end
     
-      self.execution_result := ut_assert.start_new_test( reporter );
+      ut_assert_buffer.start_new_test( reporter );
     
-      self.call_params.validate_params(params_valid);
-			
-      if params_valid then
+      if self.call_params.validate_params() then
         self.call_params.setup;
         begin
           self.call_params.run_test;
@@ -65,13 +62,11 @@ create or replace type body ut_test is
         self.call_params.teardown;
       end if;
     
-
-      self.execution_result := ut_assert.get_test_results;
-      self.execution_result.end_time := current_timestamp;
+      self.execution_result := ut_assert_buffer.get_test_results;
 
     exception
       when others then
-        --TODO - this might need to be moved to the internal exception block - need to be tested
+        --TODO - this might need to be moved to the internal exception block - need to be unit tested
         if sqlcode = -04068 then
           --raise on ORA-04068: existing state of packages has been discarded to avoid unrecoverable session exception
           raise;
@@ -84,8 +79,7 @@ create or replace type body ut_test is
         ut_assert.report_error(sqlerrm(sqlcode) || ' ' || dbms_utility.format_error_stack);
         ut_assert.report_error(sqlerrm(sqlcode) || ' ' || dbms_utility.format_error_backtrace);
 
-        self.execution_result := ut_assert.get_test_results;
-        self.execution_result.end_time := current_timestamp;
+        self.execution_result := ut_assert_buffer.get_test_results;
     end;
   
     if reporter is not null then

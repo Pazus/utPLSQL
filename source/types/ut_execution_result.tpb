@@ -5,25 +5,15 @@ create or replace type body ut_execution_result is
   begin
     self.start_time := a_start_time;
     self.result := ut_utils.tr_success;
-    assertions := ut_assert_list();
+    executions := ut_execution_list();
     return;
   end ut_execution_result;
 
-  overriding member procedure add_element( self in out nocopy ut_execution_result, an_assertion ut_assert_result_base ) is
+  member procedure add_execution( self in out nocopy ut_execution_result, an_execution ut_execution_result_base ) is
   begin
-    assertions.extend;
-    assertions(assertions.last) := an_assertion;
-    self.result := greatest(an_assertion.result, self.result);
-  end;
-
-  overriding member function get_element( a_position integer ) return ut_assert_result_base is
-  begin
-    return assertions(a_position);
-  end;
-
-  overriding member function get_elements_count return integer is
-  begin
-     return cardinality(assertions);
+    executions.extend;
+    executions(executions.last) := an_execution;
+    self.result := greatest(an_execution.result, self.result);
   end;
 
 end;

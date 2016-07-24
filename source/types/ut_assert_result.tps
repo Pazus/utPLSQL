@@ -1,8 +1,8 @@
-create or replace type ut_assert_result under ut_assert_result_base
+create or replace type ut_assert_result under ut_execution_result_base
 (
-  overriding member procedure add_element( self in out nocopy ut_assert_result, an_assertion ut_assert_result_base ),
-  overriding member function get_element( a_position integer ) return ut_assert_result_base,
-  overriding member function get_elements_count return integer
+  expected varchar2(4000 char),
+  actual   varchar2(4000 char),
+  constructor function ut_assert_result(self in out nocopy ut_assert_result, a_result integer, a_name varchar2, an_expected varchar2, an_actual varchar2, an_end_time timestamp with time zone) return self as result
 )
 not final
 /
