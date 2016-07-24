@@ -5,13 +5,16 @@ create or replace type body ut_execution_result is
   begin
     self.start_time := a_start_time;
     self.result := ut_utils.tr_success;
+    executions := ut_execution_list();
     return;
   end ut_execution_result;
 
-  member function result_to_char(self in ut_execution_result) return varchar2 is
+  member procedure add_execution( self in out nocopy ut_execution_result, an_execution ut_execution_result_base ) is
   begin
-    return ut_utils.test_result_to_char(self.result);
-  end result_to_char;
+    executions.extend;
+    executions(executions.last) := an_execution;
+    self.result := greatest(an_execution.result, self.result);
+  end;
 
 end;
 /

@@ -1,7 +1,7 @@
 --Shows how to create a test suite in code and call the test runner.
 --No tables are used for this.   
 --Suite Management packages are when developed will make this easier.
-Clear Screen
+--Clear Screen
 Set Serveroutput On Size Unlimited format truncated
 set echo off
 --install the example unit test packages
@@ -37,13 +37,16 @@ begin
     test_item := treat(suite.items(test_idx) as ut_test);
     dbms_output.put_line('---------------------------------------------------');
     dbms_output.put_line('Test:' || test_item.call_params.object_name || '.' || test_item.call_params.test_procedure);
-    dbms_output.put_line('Result: ' || test_item.execution_result.result_to_char);
+    dbms_output.put_line('Result: ' || test_item.execution_result.result);
     dbms_output.put_line('Assert Results:');
-    for i in test_item.assert_results.first .. test_item.assert_results.last loop
-      dbms_output.put_line(i || ' - result: ' || test_item.assert_results(i).result_to_char);
-      dbms_output.put_line(i || ' - Message: ' || test_item.assert_results(i).message);
+    for i in 1 .. test_item.execution_result.executions.count loop
+      dbms_output.put_line(i || ' - result: ' || test_item.execution_result.executions(i).result);
+      dbms_output.put_line(i || ' - Message: ' || test_item.execution_result.executions(i).name);
     end loop;
   end loop;
   dbms_output.put_line('---------------------------------------------------');
 end;
 /
+
+drop package ut_exampletest;
+drop package ut_exampletest2;

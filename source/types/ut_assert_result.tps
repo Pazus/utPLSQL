@@ -1,9 +1,8 @@
-create or replace type ut_assert_result as object
+create or replace type ut_assert_result under ut_execution_result_base
 (
-  result  integer(1),
-  message varchar2(4000 char),
-
-  member function result_to_char(self in ut_assert_result) return varchar2
+  expected varchar2(4000 char),
+  actual   varchar2(4000 char),
+  constructor function ut_assert_result(self in out nocopy ut_assert_result, a_result integer, a_name varchar2, an_expected varchar2, an_actual varchar2, an_end_time timestamp with time zone) return self as result
 )
 not final
 /

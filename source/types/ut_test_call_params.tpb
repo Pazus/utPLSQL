@@ -56,10 +56,10 @@ create or replace type body ut_test_call_params is
   end is_valid;
   */
 
-  member procedure validate_params(self in ut_test_call_params, a_result out boolean) is
+  member function validate_params(self in ut_test_call_params) return boolean is
+    a_result boolean := true;
   begin
-    a_result := true;
-  
+
     if self.object_name is null then
       a_result := false;
       ut_assert.report_error('Test is not invalid: test package is not defined');
@@ -94,7 +94,7 @@ create or replace type body ut_test_call_params is
                                nvl(self.teardown_procedure, '<missing procedure name>'));
       end if;
     end if;
-  
+    return a_result;
   end validate_params;
 
   member procedure setup(self in ut_test_call_params) is

@@ -1,12 +1,8 @@
-create or replace type ut_execution_result as object
+create or replace type ut_execution_result under ut_execution_result_base
 (
-
-  start_time     timestamp with time zone,
-  end_time       timestamp with time zone,
-  result         integer(1),
-
+  executions           ut_execution_list,
   constructor function ut_execution_result(a_start_time timestamp with time zone default current_timestamp) return self as result,
-  member function result_to_char(self in ut_execution_result) return varchar2
+  member procedure add_execution( self in out nocopy ut_execution_result, an_execution ut_execution_result_base )
 )
 not final
 /
