@@ -9,15 +9,12 @@ set echo off
 @@department.tps
 @@departments.tps
 @@demo_expectations.pck
-@@ut_custom_reporter.tps
-@@ut_custom_reporter.tpb
 
 begin
-  ut_suite_manager.run_cur_schema_suites_static(ut_documentation_reporter(), a_force_parse_again => true);
+  ut_runner.run();
 end;
 /
 
-drop type ut_custom_reporter;
 drop package demo_expectations;
 drop type departments$;
 drop type department$;
