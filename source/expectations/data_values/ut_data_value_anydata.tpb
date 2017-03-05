@@ -29,8 +29,8 @@ create or replace type body ut_data_value_anydata as
     l_type             anytype;
     l_anydata_accessor varchar2(30);
     l_sql varchar2(32767);
-    l_cursor number;
-    l_status number;
+    l_cursor integer;
+    l_status integer;
   begin
     if self.data_value is null then
       l_is_null := true;

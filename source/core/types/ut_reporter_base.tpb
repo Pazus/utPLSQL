@@ -21,7 +21,6 @@ create or replace type body ut_reporter_base is
     self.self_type   := a_self_type;
     self.reporter_id := sys_guid();
     self.start_date  := sysdate();
-    return;
   end;
 
   member procedure print_text(self in out nocopy ut_reporter_base, a_text varchar2) is

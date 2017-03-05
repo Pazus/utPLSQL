@@ -77,8 +77,8 @@ create or replace type body ut_executable is
 
 	member function do_execute(self in out nocopy ut_executable, a_item in out nocopy ut_suite_item, a_listener in out nocopy ut_event_listener_base) return boolean is
     l_statement      varchar2(4000);
-    l_status         number;
-    l_cursor_number  number;
+    l_status         integer;
+    l_cursor_number  integer;
     l_owner          varchar2(200) := self.owner_name;
     l_object_name    varchar2(200) := self.object_name;
     l_procedure_name varchar2(200) := self.procedure_name;

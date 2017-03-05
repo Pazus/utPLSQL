@@ -108,6 +108,7 @@ create or replace type body ut_equal as
   end;
 
   overriding member function run_matcher(self in out nocopy ut_equal, a_actual ut_data_value) return boolean is
+    c_xml_max_rows constant integer := 1000000;
     l_result boolean;
   begin
     if self.expected is of (ut_data_value_anydata) and a_actual is of (ut_data_value_anydata)
@@ -171,8 +172,8 @@ create or replace type body ut_equal as
       begin
         if l_expected.data_value is not null and l_actual.data_value is not null then
           --fetch 1M rows max
-          dbms_xmlgen.setMaxRows(l_expected.data_value, 1000000);
-          dbms_xmlgen.setMaxRows(l_actual.data_value, 1000000);
+          dbms_xmlgen.setMaxRows(l_expected.data_value, c_xml_max_rows);
+          dbms_xmlgen.setMaxRows(l_actual.data_value, c_xml_max_rows);
           ut_assert_processor.set_xml_nls_params();
           l_result := dbms_lob.compare( dbms_xmlgen.getxml(l_expected.data_value), dbms_xmlgen.getxml(l_actual.data_value) ) = 0;
           ut_assert_processor.reset_nls_params();

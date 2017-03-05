@@ -16,6 +16,7 @@ create or replace type ut_documentation_reporter under ut_console_reporter_base(
   limitations under the License.
   */
   lvl                       integer,
+  tab_size                  integer,
   failed_test_running_count integer,
   constructor function ut_documentation_reporter(self in out nocopy ut_documentation_reporter) return self as result,
   member function tab(self in ut_documentation_reporter) return varchar2,

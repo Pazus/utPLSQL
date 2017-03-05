@@ -20,13 +20,14 @@ create or replace type body ut_documentation_reporter is
   begin
     self.init($$plsql_unit);
     self.lvl                       := 0;
+    self.tab_size                  := 2;
     self.failed_test_running_count := 0;
     return;
   end;
 
   member function tab(self in ut_documentation_reporter) return varchar2 is
   begin
-    return rpad(' ', self.lvl * 2);
+    return rpad(' ', self.lvl * self.tab_size);
   end tab;
 
   member procedure print_output(a_executable ut_executable) is
@@ -112,7 +113,7 @@ create or replace type body ut_documentation_reporter is
     begin
       if a_test.result > ut_utils.tr_success then
         a_failure_no := a_failure_no + 1;
-        self.print_text(lpad(a_failure_no, length(failed_test_running_count) + 2, ' ') || ') ' ||
+        self.print_text(lpad(a_failure_no, length(failed_test_running_count) + self.tab_size, ' ') || ') ' ||
                         nvl(a_test.name, a_test.item.form_name));
         self.lvl := self.lvl + 3;
         for j in 1 .. a_test.results.count loop
