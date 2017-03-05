@@ -116,16 +116,16 @@ create or replace package body ut_coverage_report_html_helper is
 
       for line_no in 1 .. a_source_code.count loop
         if not a_coverage_unit.lines.exists(line_no) then
-          l_file_part :='
-            <li class="'||line_status(null)||'" data-hits="" data-linenumber="'||line_no||'">
-            <code class="sql">' || (dbms_xmlgen.convert(a_source_code(line_no))) || '</code></li>';
+          l_file_part :=chr(10)||
+            '            <li class="'||line_status(null)||'" data-hits="" data-linenumber="'||line_no||'">'||chr(10)||
+            '            <code class="sql">' || (dbms_xmlgen.convert(a_source_code(line_no))) || '</code></li>';
         else
-          l_file_part :='
-            <li class="'||line_status(a_coverage_unit.lines(line_no))||'" data-hits="'||(a_coverage_unit.lines(line_no))||'" data-linenumber="'||(line_no)||'">'||
-            case when a_coverage_unit.lines(line_no) > 0 then '
-              <span class="hits">'||(a_coverage_unit.lines(line_no))||'</span>'
-            end||'
-              <code class="sql">' || (dbms_xmlgen.convert(a_source_code(line_no))) || '</code></li>';
+          l_file_part :=chr(10)||
+            '<li class="'||line_status(a_coverage_unit.lines(line_no))||'" data-hits="'||(a_coverage_unit.lines(line_no))||'" data-linenumber="'||(line_no)||'">'||chr(10)||
+            case when a_coverage_unit.lines(line_no) > 0 then 
+              '<span class="hits">' || (a_coverage_unit.lines(line_no)) || '</span>' || chr(10)
+            end||
+              '<code class="sql">' || (dbms_xmlgen.convert(a_source_code(line_no))) || '</code></li>';
         end if;
         dbms_lob.writeappend(l_result, length(l_file_part), l_file_part);
       end loop;
@@ -251,8 +251,7 @@ create or replace package body ut_coverage_report_html_helper is
       l_unit := a_coverage_data.objects.next(l_unit);
     end loop;
 
-    l_file_part := '</div></div></body></html>
-    ';
+    l_file_part := '</div></div></body></html>';
 
     dbms_lob.writeappend(l_result, length(l_file_part), l_file_part);
     return l_result;

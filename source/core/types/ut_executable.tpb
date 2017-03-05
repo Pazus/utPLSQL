@@ -145,7 +145,7 @@ create or replace type body ut_executable is
       ut_utils.debug_log('ut_executable.do_execute l_statement: ' || l_statement);
 
       l_cursor_number := dbms_sql.open_cursor;
-      dbms_sql.parse(l_cursor_number, statement => l_statement, language_flag => dbms_sql.native);
+      dbms_sql.parse(c => l_cursor_number, statement => l_statement, language_flag => dbms_sql.native);
       dbms_sql.bind_variable(l_cursor_number, 'a_error_stack', to_char(null), 32767);
       dbms_sql.bind_variable(l_cursor_number, 'a_error_backtrace', to_char(null), 32767);
 

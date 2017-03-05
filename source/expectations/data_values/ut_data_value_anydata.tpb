@@ -40,17 +40,16 @@ create or replace type body ut_data_value_anydata as
       l_anydata_accessor :=
         case when self.data_value.gettype(l_type) = sys.dbms_types.typecode_object then 'getObject' else 'getCollection' end;
 
-        l_sql := '
-        declare
-          l_data '||self.data_value.gettypename()||';
-          l_value anydata := :a_value;
-          x integer;
-        begin
-          x := l_value.'||l_anydata_accessor||'(l_data);
-          :l_data_is_null := case when l_data is null then 1 else 0 end;
-        end;';
+        l_sql := 'declare'||chr(10)||
+        '  l_data '||self.data_value.gettypename()||';'||chr(10)||
+        '  l_value anydata := :a_value;'||chr(10)||
+        '  x integer;'||chr(10)||
+        'begin'||chr(10)||
+        '  x := l_value.'||l_anydata_accessor||'(l_data);'||chr(10)||
+        '  :l_data_is_null := case when l_data is null then 1 else 0 end;'||chr(10)||
+        'end;';
         l_cursor := sys.dbms_sql.open_cursor();
-        sys.dbms_sql.parse(l_cursor, l_sql, dbms_sql.native);
+        sys.dbms_sql.parse(c => l_cursor, statement => l_sql, language_flag => dbms_sql.native);
         sys.dbms_sql.bind_variable(l_cursor,'a_value',self.data_value);
         sys.dbms_sql.bind_variable(l_cursor,'l_data_is_null',l_data_is_null);
         begin
