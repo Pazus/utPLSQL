@@ -15,7 +15,6 @@ addons:
     branches:
       - develop
       - master
-      - cleanup
     token:
       secure: ${SONAR_TOKEN}
 
