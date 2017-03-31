@@ -137,7 +137,7 @@ exec ut_coverage.coverage_start_develop();
 @@lib/RunTest.sql ut_suite_manager/ut_suite_manager.configure_execution_by_path.PrepareRunnerForTheTop2PackageProcedureByPathCurUser.sql
 @@lib/RunTest.sql ut_suite_manager/ut_suite_manager.DoesntFindTheSuiteWhenPackageSpecIsInvalid.sql
 
-@@lib/RunTest.sql ut_test/ut_test.IgnoreFlagSkipTest.sql
+@@lib/RunTest.sql ut_test/ut_test.DisabledFlagSkipTest.sql
 @@lib/RunTest.sql ut_test/ut_test.OwnerNameInvalid.sql
 @@lib/RunTest.sql ut_test/ut_test.OwnerNameNull.sql
 @@lib/RunTest.sql ut_test/ut_test.PackageInInvalidState.sql
@@ -164,6 +164,8 @@ exec ut_coverage.coverage_start_develop();
 @@lib/RunTest.sql ut_test/ut_test.BeforeEachProcedureNameNull.sql
 @@lib/RunTest.sql ut_test/ut_test.TestOutputGathering.sql
 @@lib/RunTest.sql ut_test/ut_test.TestOutputGatheringForTeamcity.sql
+@@lib/RunTest.sql ut_test/ut_test.TestOutputGatheringWhenEmpty.sql
+@@lib/RunTest.sql ut_test/ut_test.ReportWarningOnRollbackFailed.sql
 
 @@lib/RunTest.sql ut_test_suite/ut_test_suite.ErrorsATestWhenAfterTestFails.sql
 @@lib/RunTest.sql ut_test_suite/ut_test_suite.ErrorsATestWhenBeforeTestFails.sql
@@ -171,7 +173,7 @@ exec ut_coverage.coverage_start_develop();
 @@lib/RunTest.sql ut_test_suite/ut_test_suite.ErrorsEachTestWhenBeforeEachFails.sql
 @@lib/RunTest.sql ut_test_suite/ut_test_suite.ErrorsEachTestWhenPackageHasInvalidBody.sql
 @@lib/RunTest.sql ut_test_suite/ut_test_suite.ErrorsEachTestWhenPackageHasNoBody.sql
-@@lib/RunTest.sql ut_test_suite/ut_test_suite.IgnoreFlagSkipSuite.sql
+@@lib/RunTest.sql ut_test_suite/ut_test_suite.DisabledFlagSkipSuite.sql
 @@lib/RunTest.sql ut_test_suite/ut_test_suite.ReportsWarningsATestWhenAfterAllFails.sql
 @@lib/RunTest.sql ut_test_suite/ut_test_suite.ReportsWarningsATestWhenAfterEachFails.sql
 @@lib/RunTest.sql ut_test_suite/ut_test_suite.Rollback_type.Auto.sql
@@ -439,9 +441,9 @@ begin
   ut_coverage.coverage_stop_develop();
 
   --run for the second time to get the coverage report
-  l_reporter := ut_coverage_html_reporter( a_project_name => 'utPLSQL v3', a_file_paths => l_file_list );
-  :html_reporter_id := l_reporter.reporter_id;
-  l_reporter.after_calling_run(ut_run(ut_suite_items()));
+--   l_reporter := ut_coverage_html_reporter( a_project_name => 'utPLSQL v3', a_file_paths => l_file_list );
+--   :html_reporter_id := l_reporter.reporter_id;
+--   l_reporter.after_calling_run(ut_run(ut_suite_items()));
 
   l_reporter := ut_coverage_sonar_reporter( a_file_paths => l_file_list );
   :sonar_reporter_id := l_reporter.reporter_id;
@@ -469,12 +471,12 @@ spool coverage.json
 select * from table(ut_output_buffer.get_lines(:coveralls_reporter_id));
 spool off
 
-set termout on
-prompt Spooling outcomes to coverage.html
-set termout off
-spool coverage.html
-exec ut_output_buffer.lines_to_dbms_output(:html_reporter_id);
-spool off
+-- set termout on
+-- prompt Spooling outcomes to coverage.html
+-- set termout off
+-- spool coverage.html
+-- exec ut_output_buffer.lines_to_dbms_output(:html_reporter_id);
+-- spool off
 
 @@lib/mystats/mystats stop t=1000
 
