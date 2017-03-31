@@ -63,6 +63,13 @@ create or replace package test_ut_test is
   --%test(Reports error when test procedure name for a test is null)
   procedure proc_name_null;
   
+  --%test(Warn if rollback failed)
+  --%beforetest(prep_rollback_fail)
+  --%aftertest(cleanup_rollback_fail)
+  procedure ReportWarningOnRollbackFailed;
+  procedure prep_rollback_fail;
+  procedure cleanup_rollback_fail;
+  
   --%test(Test auto transaction control)
   procedure transact_control_auto;
   
@@ -77,6 +84,9 @@ create or replace package test_ut_test is
   
   --%test(Invoke setup procedure before test when setup procedure name is defined)
   procedure before_test_exec;
+  
+  --%test(Does not execute test and reports error when test setup procedure name for a test is invalid)
+  procedure beforetest_name_invalid;
   
 
 end test_ut_test;
@@ -301,6 +311,43 @@ create or replace package body test_ut_test is
     ut.expect(simple_test.result).to_equal(ut_utils.tr_error);
   end;
   
+  procedure prep_rollback_fail is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'create or replace package ut_output_test_rollback
+as
+ --%suite
+  
+ --%test
+ procedure tt;
+ 
+end;';
+  end;
+  procedure cleanup_rollback_fail is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'drop package ut_output_test_rollback';
+  end;
+  procedure ReportWarningOnRollbackFailed is
+    l_output_data       dbms_output.chararr;
+    l_num_lines         integer := 100000;
+    l_output            clob;
+  begin
+    --act
+    ut.run('ut_output_test_rollback');
+
+    --assert
+    dbms_output.get_lines( l_output_data, l_num_lines);
+    dbms_lob.createtemporary(l_output,true);
+    for i in 1 .. l_num_lines loop
+      dbms_lob.append(l_output,l_output_data(i));
+    end loop;
+    
+    ut.expect(l_output).to_be_like('%Warnings:%Savepoint not established. Implicit commit might have occured.%0 disabled, 1 warning(s)%');
+
+  end;
+  
+  
   procedure transact_control_auto is
     l_suite ut_logical_suite;
     l_test  ut_test;
@@ -437,6 +484,22 @@ create or replace package body test_ut_test is
   --Assert
     ut.expect(simple_test.result).to_equal(ut_utils.tr_error);
     execute immediate q'[begin ut.expect(ut_example_tests.g_char).to_be_null; end;]';
+  end;
+  
+  procedure beforetest_name_null is
+    simple_test ut_test := ut_test(
+       a_before_test_proc_name => null
+      ,a_object_name => 'ut_example_tests'
+      ,a_name => 'ut_passing_test'
+    );
+    listener ut_event_listener := ut_event_listener(ut_reporters());
+  begin
+  --Act
+    simple_test.do_execute(listener);
+  --Assert
+    ut.expect(ut_example_tests.g_number).to_be_null;
+    ut.expect(simple_test.result).to_equal(ut_utils.tr_success);
+
   end;
   
   procedure compile_invalid_pck is
