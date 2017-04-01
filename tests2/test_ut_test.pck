@@ -88,6 +88,38 @@ create or replace package test_ut_test is
   --%test(Does not execute test and reports error when test setup procedure name for a test is invalid)
   procedure beforetest_name_invalid;
   
+  --%test(Does not invoke setup procedure when setup procedure name for a test is null)
+  procedure beforetest_name_null;
+  
+  --test(Invoke aftertest procedure after test when teardown procedure name is defined)
+  procedure aftertest_execute;
+  
+  --%test(Does not execute test and reports error when test aftertest procedure name for a test is invalid)
+  procedure aftertest_name_invalid;
+  
+  --%test(Does not invoke teardown procedure when teardown procedure name for a test is null)
+  procedure aftertest_name_null;
+  
+  --%test(Check dbms_output is gathered)
+  --%beforetest(setup_output_test_pkg)
+  --%aftertest(drop_output_test_pkg)
+  procedure output_gathering;
+  
+  --%test(Check dbms_output is gathered for Teamcity reporter)
+  --%beforetest(setup_output_test_pkg)
+  --%aftertest(drop_output_test_pkg)
+  procedure output_gathering_for_teamcity;
+  
+  procedure setup_output_test_pkg;
+  procedure drop_output_test_pkg;
+  
+  --%test(Dont fail on empty output [Issue 249])
+  --%beforetest(prepare_empty_output_test)
+  --%aftertest(drop_empty_output_test)
+  procedure empty_test_output;
+  
+  procedure prepare_empty_output_test;
+  procedure drop_empty_output_test;
 
 end test_ut_test;
 /
@@ -215,7 +247,7 @@ create or replace package body test_ut_test is
     
     execute immediate 'delete from ut$test_table';
 
-    l_test := ut_test(a_object_name => 'ut_transaction_control', a_name => 'test', a_rollback_type => ut_utils.gc_rollback_auto, a_ignore_flag => true);
+    l_test := ut_test(a_object_name => 'ut_transaction_control', a_name => 'test', a_rollback_type => ut_utils.gc_rollback_auto, a_disabled_flag => true);
     l_suite := ut_suite (a_description => 'Suite name', a_name => 'UT_TRANSACTION_CONTROL', a_object_name => 'UT_TRANSACTION_CONTROL', a_rollback_type => ut_utils.gc_rollback_auto,a_path => 'ut_transaction_control');
     l_suite.add_item(l_test);
 
@@ -225,7 +257,7 @@ create or replace package body test_ut_test is
     ut_assert_processor.clear_asserts;
 
     --Assert
-    ut.expect(l_suite.result).to_equal(ut_utils.tr_ignore);
+    ut.expect(l_suite.result).to_equal(ut_utils.tr_disabled);
     execute immediate q'[begin ut.expect(ut_transaction_control.count_rows('t')).to_equal(0); end;]';
   end;
   
@@ -322,16 +354,27 @@ as
  procedure tt;
  
 end;';
+    execute immediate 'create or replace package body ut_output_test_rollback
+as
+
+ procedure tt is
+  begin
+    commit;
+  end;
+
+end;';
   end;
   procedure cleanup_rollback_fail is
     pragma autonomous_transaction;
   begin
     execute immediate 'drop package ut_output_test_rollback';
   end;
+
   procedure ReportWarningOnRollbackFailed is
     l_output_data       dbms_output.chararr;
     l_num_lines         integer := 100000;
     l_output            clob;
+    pragma autonomous_transaction;
   begin
     --act
     ut.run('ut_output_test_rollback');
@@ -497,9 +540,223 @@ end;';
   --Act
     simple_test.do_execute(listener);
   --Assert
-    ut.expect(ut_example_tests.g_number).to_be_null;
+    
+    execute immediate q'[begin ut.expect(ut_example_tests.g_number).to_be_null; end;]';
     ut.expect(simple_test.result).to_equal(ut_utils.tr_success);
 
+  end;
+  
+  procedure aftertest_execute is
+    simple_test ut_test := ut_test(
+      a_object_name         => 'ut_example_tests'
+      ,a_name     => 'ut_passing_test'
+      ,a_after_test_proc_name => 'teardown'
+    );
+    listener ut_event_listener := ut_event_listener(ut_reporters());
+  begin
+  --Act
+    simple_test.do_execute(listener);
+  --Assert
+    
+    execute immediate q'[begin ut.expect(ut_example_tests.g_char).to_be_null; end;]';
+    ut.expect(simple_test.result).to_equal(ut_utils.tr_success);
+  end;
+  
+  procedure aftertest_name_invalid is
+    simple_test ut_test := ut_test(
+      a_after_test_proc_name => 'invalid setup name'
+      ,a_object_name => 'ut_example_tests'
+      ,a_name => 'ut_exampletest'
+    );
+    listener ut_event_listener := ut_event_listener(ut_reporters());
+  begin
+    
+    execute immediate q'[begin ut_example_tests.g_char := 'x'; end;]';
+  --Act
+    simple_test.do_execute(listener);
+    ut_assert_processor.clear_asserts;
+  --Assert
+    
+    execute immediate q'[begin ut.expect(ut_example_tests.g_char).to_equal('x'); end;]';
+    ut.expect(simple_test.result).to_equal(ut_utils.tr_error);
+  end;
+  
+  procedure aftertest_name_null is
+    simple_test ut_test := ut_test(
+      a_after_test_proc_name => null
+      ,a_object_name => 'ut_example_tests'
+      ,a_name => 'ut_passing_test'
+    );
+    listener ut_event_listener := ut_event_listener(ut_reporters());
+  begin
+  --Act
+    simple_test.do_execute(listener);
+  --Assert
+    execute immediate q'[begin ut.expect(ut_example_tests.g_char).to_equal('a'); end;]';
+    ut.expect(simple_test.result).to_equal(ut_utils.tr_success);
+
+  end;
+  
+  procedure output_gathering is
+    l_output_data       dbms_output.chararr;
+    l_num_lines         integer := 100000;
+    l_output            clob;
+  begin
+    --act
+    ut.run('ut_output_tests');
+
+    --assert
+    dbms_output.get_lines( l_output_data, l_num_lines);
+    dbms_lob.createtemporary(l_output,true);
+    for i in 1 .. l_num_lines loop
+      dbms_lob.append(l_output,l_output_data(i));
+    end loop;
+    
+    ut.expect(l_output).to_be_like('%<!beforeall!>%<!beforeeach!>%<!beforetest!>%<!thetest!>%<!aftertest!>%<!aftereach!>%<!afterall!>%1 tests, 0 failed, 0 errored%');
+  end;
+  
+  
+  procedure output_gathering_for_teamcity is
+    l_output_data       dbms_output.chararr;
+    l_num_lines         integer := 100000;
+    l_output            clob;
+  begin
+    --act
+    ut.run('ut_output_tests',ut_teamcity_reporter);
+
+    --assert
+    dbms_output.get_lines( l_output_data, l_num_lines);
+    dbms_lob.createtemporary(l_output,true);
+    for i in 1 .. l_num_lines loop
+      dbms_lob.append(l_output,l_output_data(i));
+    end loop;
+    ut.expect(l_output).to_be_like('%##teamcity[testStarted%<!beforeeach!>%<!beforetest!>%<!thetest!>%<!aftertest!>%<!aftereach!>%##teamcity[testFinished%');
+  end;
+  
+  procedure empty_test_output is
+    l_output_data       dbms_output.chararr;
+    l_num_lines         integer := 100000;
+    l_output            clob;
+  begin
+    --act
+    ut.run('ut_empty_output_tests');
+
+    --assert
+    dbms_output.get_lines( l_output_data, l_num_lines);
+    dbms_lob.createtemporary(l_output,true);
+    for i in 1 .. l_num_lines loop
+      dbms_lob.append(l_output,l_output_data(i));
+    end loop;
+    
+    ut.expect(l_output).to_be_like('%0 failed, 0 errored, 0 disabled, 0 warning(s)%');
+  end;
+  
+  procedure prepare_empty_output_test is
+  begin
+    execute immediate q'[create or replace package ut_empty_output_tests
+as
+ --%suite
+  
+ --%test
+ procedure ut_passing_test;
+ 
+end;]';
+
+    execute immediate q'[create or replace package body ut_empty_output_tests
+as
+
+ procedure ut_passing_test
+ as
+ begin
+   --Generate empty output
+   dbms_output.put_line('');
+   ut.expect(1,'Test 1 Should Pass').to_equal(1);
+ end;
+ 
+end;]';
+  end;
+    
+  procedure drop_empty_output_test is
+  begin
+    execute immediate 'drop package ut_empty_output_tests';
+  end;
+  
+  procedure setup_output_test_pkg is
+  begin
+    execute immediate q'[create or replace package ut_output_tests
+as
+ --%suite
+  
+ --%beforeeach
+ procedure beforeeach;
+ 
+ --%aftereach
+ procedure aftereach;
+ 
+ --%test
+ --%beforetest(beforetest)
+ --%aftertest(aftertest)
+ procedure ut_passing_test;
+ 
+ procedure beforetest;
+ 
+ procedure aftertest;
+ 
+ --%beforeall
+ procedure beforeall;
+ --%afterall 
+ procedure afterall;
+ 
+end;]';
+
+  execute immediate q'[create or replace package body ut_output_tests
+as
+
+ procedure beforetest as
+ begin
+   dbms_output.put_line('<!beforetest!>');
+ end;
+
+ procedure aftertest
+ as
+ begin
+   dbms_output.put_line('<!aftertest!>');
+ end;
+ 
+ procedure beforeeach as
+ begin
+   dbms_output.put_line('<!beforeeach!>');
+ end;
+
+ procedure aftereach
+ as
+ begin
+   dbms_output.put_line('<!aftereach!>');
+ end;
+
+ procedure ut_passing_test
+ as
+ begin
+   dbms_output.put_line('<!thetest!>');
+   ut.expect(1,'Test 1 Should Pass').to_equal(1);
+ end;
+ 
+ procedure beforeall is
+ begin
+   dbms_output.put_line('<!beforeall!>');
+ end;
+
+ procedure afterall is
+ begin
+   dbms_output.put_line('<!afterall!>');
+ end;
+
+end;]';
+  end;
+  
+  procedure drop_output_test_pkg is
+  begin
+    execute immediate 'drop package ut_output_tests';
   end;
   
   procedure compile_invalid_pck is
