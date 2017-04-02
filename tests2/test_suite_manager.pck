@@ -323,14 +323,14 @@ create or replace package body test_suite_manager is
     ut.expect(treat(l_test1_suite.items(1) as ut_test).before_test.is_defined).to_be_false;
     ut.expect(treat(l_test1_suite.items(1) as ut_test).after_test.is_defined).to_be_false;
     ut.expect(treat(l_test1_suite.items(1) as ut_test).before_each.is_defined).to_be_true;
-    ut.expect(treat(l_test1_suite.items(1) as ut_test).ignore_flag).to_equal(0);
+    ut.expect(treat(l_test1_suite.items(1) as ut_test).DISABLED_FLAG).to_equal(0);
     
     ut.expect(l_test1_suite.items(2).name).to_equal('test2');
     ut.expect(l_test1_suite.items(2).description).to_equal('Test2 from test package 1');
     ut.expect(treat(l_test1_suite.items(2) as ut_test).before_test.is_defined).to_be_true;
     ut.expect(treat(l_test1_suite.items(2) as ut_test).after_test.is_defined).to_be_true;
     ut.expect(treat(l_test1_suite.items(2) as ut_test).before_each.is_defined).to_be_true;
-    ut.expect(treat(l_test1_suite.items(2) as ut_test).ignore_flag).to_equal(0);
+    ut.expect(treat(l_test1_suite.items(2) as ut_test).DISABLED_FLAG).to_equal(0);
     
     -- temporary behavior.
     -- decided that when executed by package, not path, only that package has to execute
@@ -367,14 +367,14 @@ create or replace package body test_suite_manager is
     ut.expect(treat(l_test1_suite.items(1) as ut_test).before_test.is_defined).to_be_false;
     ut.expect(treat(l_test1_suite.items(1) as ut_test).after_test.is_defined).to_be_false;
     ut.expect(treat(l_test1_suite.items(1) as ut_test).before_each.is_defined).to_be_true;
-    ut.expect(treat(l_test1_suite.items(1) as ut_test).ignore_flag).to_equal(0);
+    ut.expect(treat(l_test1_suite.items(1) as ut_test).DISABLED_FLAG).to_equal(0);
     
     ut.expect(l_test1_suite.items(2).name).to_equal('test2');
     ut.expect(l_test1_suite.items(2).description).to_equal('Test2 from test package 1');
     ut.expect(treat(l_test1_suite.items(2) as ut_test).before_test.is_defined).to_be_true;
     ut.expect(treat(l_test1_suite.items(2) as ut_test).after_test.is_defined).to_be_true;
     ut.expect(treat(l_test1_suite.items(2) as ut_test).before_each.is_defined).to_be_true;
-    ut.expect(treat(l_test1_suite.items(2) as ut_test).ignore_flag).to_equal(0);
+    ut.expect(treat(l_test1_suite.items(2) as ut_test).DISABLED_FLAG).to_equal(0);
     
     -- temporary behavior.
     -- decided that when executed by package, not path, only that package has to execute
@@ -579,11 +579,11 @@ create or replace package body test_suite_manager is
     
     l_test1 := treat(l_test1_suite.items(1) as ut_test);
     ut.expect(l_test1.name).to_equal('test1');
-    ut.expect(l_test1.ignore_flag).to_equal(0);
+    ut.expect(l_test1.DISABLED_FLAG).to_equal(0);
     
     l_test3 := treat(l_test1_suite.items(3) as ut_test);
     ut.expect(l_test3.name).to_equal('disabled_test');
-    ut.expect(l_test3.ignore_flag).to_equal(1);
+    ut.expect(l_test3.DISABLED_FLAG).to_equal(1);
   end;
   
   procedure test_top_pkc_nosub_by_name_cu is
@@ -611,11 +611,11 @@ create or replace package body test_suite_manager is
     
     l_test1 := treat(l_test1_suite.items(1) as ut_test);
     ut.expect(l_test1.name).to_equal('test1');
-    ut.expect(l_test1.ignore_flag).to_equal(0);
+    ut.expect(l_test1.DISABLED_FLAG).to_equal(0);
     
     l_test3 := treat(l_test1_suite.items(3) as ut_test);
     ut.expect(l_test3.name).to_equal('disabled_test');
-    ut.expect(l_test3.ignore_flag).to_equal(1);
+    ut.expect(l_test3.DISABLED_FLAG).to_equal(1);
   end;
   
   procedure test_top_subpck_by_path is
@@ -643,11 +643,11 @@ create or replace package body test_suite_manager is
     
     l_test1 := treat(l_test1_suite.items(1) as ut_test);
     ut.expect(l_test1.name).to_equal('test1');
-    ut.expect(l_test1.ignore_flag).to_equal(0);
+    ut.expect(l_test1.DISABLED_FLAG).to_equal(0);
     
     l_test3 := treat(l_test1_suite.items(3) as ut_test);
     ut.expect(l_test3.name).to_equal('disabled_test');
-    ut.expect(l_test3.ignore_flag).to_equal(1);
+    ut.expect(l_test3.DISABLED_FLAG).to_equal(1);
   end;  
   
   procedure test_top_subpck_by_path_cu is
@@ -675,11 +675,11 @@ create or replace package body test_suite_manager is
     
     l_test1 := treat(l_test1_suite.items(1) as ut_test);
     ut.expect(l_test1.name).to_equal('test1');
-    ut.expect(l_test1.ignore_flag).to_equal(0);
+    ut.expect(l_test1.DISABLED_FLAG).to_equal(0);
     
     l_test3 := treat(l_test1_suite.items(3) as ut_test);
     ut.expect(l_test3.name).to_equal('disabled_test');
-    ut.expect(l_test3.ignore_flag).to_equal(1);
+    ut.expect(l_test3.DISABLED_FLAG).to_equal(1);
   end;  
   
   procedure test_search_invalid_pck is

@@ -652,6 +652,7 @@ end;';
   end;
   
   procedure prepare_empty_output_test is
+    pragma autonomous_transaction;
   begin
     execute immediate q'[create or replace package ut_empty_output_tests
 as
@@ -675,13 +676,21 @@ as
  
 end;]';
   end;
+  
+  procedure drop_output_test_pkg is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'drop package ut_output_tests';
+  end;
     
   procedure drop_empty_output_test is
+    pragma autonomous_transaction;
   begin
     execute immediate 'drop package ut_empty_output_tests';
   end;
   
   procedure setup_output_test_pkg is
+    pragma autonomous_transaction;
   begin
     execute immediate q'[create or replace package ut_output_tests
 as
@@ -752,11 +761,6 @@ as
  end;
 
 end;]';
-  end;
-  
-  procedure drop_output_test_pkg is
-  begin
-    execute immediate 'drop package ut_output_tests';
   end;
   
   procedure compile_invalid_pck is
