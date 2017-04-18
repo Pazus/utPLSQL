@@ -1,10 +1,10 @@
-create or replace package test_remove_rooms_by_name as
+create or replace package "test_Remove_rooms_by_name" as
 
   -- %suite
   -- %displayname(Remove rooms by name)
 
   -- %beforeall
-  procedure setup_rooms;
+  procedure "setup_ROOMs";
 
   -- %test
   -- %displayname(Removes a room without content in it)
@@ -12,7 +12,7 @@ create or replace package test_remove_rooms_by_name as
 
   -- %test
   -- %displayname(Does not remove room when it has content)
-  procedure room_with_content;
+  procedure "room_WITH_content";
 
   -- %test
   -- %displayname(Raises exception when null room name given)
@@ -20,9 +20,9 @@ create or replace package test_remove_rooms_by_name as
 
 end;
 /
-create or replace package body test_remove_rooms_by_name as
+create or replace package body "test_Remove_rooms_by_name" as
 
-  procedure setup_rooms is
+  procedure "setup_ROOMs" is
   begin
     insert all
       into rooms values(1, 'Dining Room')
@@ -57,7 +57,7 @@ create or replace package body test_remove_rooms_by_name as
     ut.expect( l_remaining_rooms ).to_(equal(l_rooms_not_named_b));
   end;
 
-  procedure room_with_content is
+  procedure "room_WITH_content" is
     l_rooms           sys_refcursor;
     l_remaining_rooms sys_refcursor;
   begin

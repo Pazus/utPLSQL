@@ -22,10 +22,10 @@ create or replace type body ut_suite_item as
   ) is
   begin
     self.object_owner := a_object_owner;
-    self.object_name := lower(trim(a_object_name));
-    self.name := lower(trim(a_name));
+    self.object_name := trim(a_object_name);
+    self.name := trim(a_name);
     self.description := a_description;
-    self.path := nvl(lower(trim(a_path)), self.object_name);
+    self.path := nvl(lower(trim(a_path)), lower(self.object_name));
     self.rollback_type := a_rollback_type;
     self.disabled_flag := ut_utils.boolean_to_int(a_disabled_flag);
     self.results_count := ut_results_counter();

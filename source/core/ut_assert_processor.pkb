@@ -134,8 +134,8 @@ create or replace package body ut_assert_processor as
     l_line_no              := to_number( regexp_substr(l_caller_stack_line,'^\dx[0-9a-f]+\s+(\d+)',subexpression => 1) );
     l_caller_type_and_name    := substr( l_caller_stack_line, 23 );
     if l_caller_stack_line like '%.%' then
-      l_owner       := regexp_substr(l_caller_stack_line,'\s(\w+)\.(\w|\.)+$',subexpression => 1);
-      l_object_name := regexp_substr(l_caller_stack_line,'\s(\w+)\.((\w|\.)+)$',subexpression => 2);
+      l_owner       := regexp_substr(l_caller_stack_line,'\s"?(\w+)"?\."?(\w|\.)+"?$',subexpression => 1);
+      l_object_name := regexp_substr(l_caller_stack_line,'\s"?(\w+)"?\."?((\w|\.)+)"?$',subexpression => 2);
     end if;
     return
       case when l_owner is not null and l_object_name is not null and l_line_no is not null then

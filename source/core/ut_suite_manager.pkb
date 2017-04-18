@@ -42,6 +42,28 @@ create or replace package body ut_suite_manager is
        and t.object_type in ('PACKAGE');
     return l_info;
   end;
+  
+  function find_package_name(a_schema varchar2, a_package_name varchar2) return varchar2 is
+    l_package_name all_objects.object_name%type;
+  begin
+    begin
+      select t.object_name
+        into l_package_name
+        from all_objects t
+       where t.owner = a_schema
+         and t.object_name = a_package_name
+         and t.object_type in ('PACKAGE','SYNONYM');
+    exception
+      when no_data_found then
+        select t.object_name
+          into l_package_name
+          from all_objects t
+         where t.owner = upper(a_schema)
+           and upper(t.object_name) = upper(a_package_name)
+           and t.object_type in ('PACKAGE','SYNONYM');
+    end;
+    return l_package_name;
+  end;
 
   function config_package(a_owner_name varchar2, a_object_name varchar2) return ut_logical_suite is
     l_annotation_data    ut_annotations.typ_annotated_package;
@@ -397,7 +419,7 @@ create or replace package body ut_suite_manager is
     begin
       l_paths_temp.extend(a_paths.count);
       for i in 1 .. a_paths.count loop
-        l_paths_temp(i) := trim(lower(a_paths(i)));
+        l_paths_temp(i) := trim(a_paths(i));
       end loop;
       l_paths_temp := set(l_paths_temp);
       return l_paths_temp;
@@ -450,9 +472,18 @@ create or replace package body ut_suite_manager is
       select count(*)
         into l_cnt
         from all_objects t
-       where t.object_name = upper(a_package_name)
+       where t.object_name = a_package_name
          and t.object_type = 'PACKAGE'
          and t.owner = c_current_schema;
+      if l_cnt=0 then
+        -- case insensitive
+        select count(*)
+          into l_cnt
+          from all_objects t
+         where upper(t.object_name) = upper(a_package_name)
+           and t.object_type = 'PACKAGE'
+           and t.owner = c_current_schema;
+      end if;
       return l_cnt > 0;
     end package_exists_in_cur_schema;
 
@@ -514,6 +545,8 @@ create or replace package body ut_suite_manager is
           begin
             l_package_name   := regexp_substr(l_path, '^\w+\.(\w+)(\.(\w+))?$', subexpression => 1);
             l_procedure_name := regexp_substr(l_path, '^\w+\.(\w+)(\.(\w+))?$', subexpression => 3);
+            
+            l_package_name := find_package_name(l_schema, l_package_name);
 
             l_temp_suite := config_package(l_schema, l_package_name);
 

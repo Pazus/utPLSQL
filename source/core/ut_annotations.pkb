@@ -27,7 +27,7 @@ create or replace package body ut_annotations as
   --c_nonannotat_comment_pattern  constant varchar2(30) := '^( |'||chr(09)||')*--+ *[^'||gc_annotation_qualifier||']*?$';
   c_comment_replacer_patter     constant varchar2(50) := '{COMMENT#%N%}';
   c_comment_replacer_regex_ptrn constant varchar2(25) := '{COMMENT#(\d+)}';
-  c_rgexp_identifier            constant varchar2(50) := '[a-z][a-z0-9#_$]*';
+  c_rgexp_identifier            constant varchar2(50) := '"?[a-z][a-z0-9#_$"]*';
   c_annotation_block_pattern    constant varchar2(200) := '(({COMMENT#.+}'||chr(10)||')+)( |'||chr(09)||')*(procedure|function)\s+(' ||
                                                            c_rgexp_identifier || ')';
   c_annotation_pattern          constant varchar2(50) := gc_annotation_qualifier || c_rgexp_identifier || '(\(.*?\))?';
@@ -199,7 +199,11 @@ create or replace package body ut_annotations as
                                            ,subexpression => 5));
 
       -- parse the comment block for the syntactically correct annotations and store them as an array
-      l_procedure_annotations.name := l_proc_name;
+      if l_proc_name like '"%"' then
+        l_procedure_annotations.name := replace(l_proc_name,'"');
+      else
+        l_procedure_annotations.name := upper(l_proc_name);
+      end if;
       l_procedure_annotations.annotations := get_annotations(l_proc_comments, a_comments);
 
       l_procedure_list(l_procedure_list.count+1) := l_procedure_annotations;
