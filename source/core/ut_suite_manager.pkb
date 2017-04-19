@@ -64,6 +64,30 @@ create or replace package body ut_suite_manager is
     end;
     return l_package_name;
   end;
+  
+  function find_package_proc_name(a_schema varchar2, a_package_name varchar2, a_proc_name varchar2) return varchar2 is
+    l_proc_name all_objects.object_name%type;
+  begin
+    begin
+      select distinct t.procedure_name
+        into l_proc_name
+        from all_procedures t
+       where t.owner = a_schema
+         and t.object_name = a_package_name
+         and t.procedure_name = a_proc_name
+         and t.object_type = 'PACKAGE';
+    exception
+      when no_data_found then
+        select distinct t.procedure_name
+          into l_proc_name
+          from all_procedures t
+         where t.owner = upper(a_schema)
+           and upper(t.object_name) = upper(a_package_name)
+           and upper(t.procedure_name) = upper(a_proc_name)
+           and t.object_type = 'PACKAGE';
+    end;
+    return l_proc_name;
+  end;
 
   function config_package(a_owner_name varchar2, a_object_name varchar2) return ut_logical_suite is
     l_annotation_data    ut_annotations.typ_annotated_package;
@@ -151,6 +175,14 @@ create or replace package body ut_suite_manager is
 
       for i in 1 .. l_annotation_data.procedure_annotations.count loop
         l_proc_name        := l_annotation_data.procedure_annotations(i).name;
+        /*
+        if l_proc_name like '"%"' then
+          l_proc_name := replace(l_proc_name,'"');
+        else
+          l_proc_name := upper(l_proc_name);
+        end if;
+        */
+        
         l_proc_annotations := l_annotation_data.procedure_annotations(i).annotations;
         if l_proc_annotations.exists('test') then
           declare
@@ -161,11 +193,11 @@ create or replace package body ut_suite_manager is
             l_displayname          varchar2(4000);
           begin
             if l_proc_annotations.exists('beforetest') then
-              l_beforetest_procedure := ut_annotations.get_annotation_param(l_proc_annotations('beforetest'), 1);
+              l_beforetest_procedure := find_package_proc_name(l_owner_name,l_object_name, ut_annotations.get_annotation_param(l_proc_annotations('beforetest'), 1));
             end if;
 
             if l_proc_annotations.exists('aftertest') then
-              l_aftertest_procedure := ut_annotations.get_annotation_param(l_proc_annotations('aftertest'), 1);
+              l_aftertest_procedure := find_package_proc_name(l_owner_name,l_object_name, ut_annotations.get_annotation_param(l_proc_annotations('aftertest'), 1));
             end if;
 
             if l_proc_annotations.exists('displayname') then
