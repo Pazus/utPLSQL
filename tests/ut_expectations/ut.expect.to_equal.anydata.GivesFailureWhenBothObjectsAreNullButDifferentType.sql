@@ -1,4 +1,3 @@
-PROMPT Gives a success when comparing null oracle objects of different type
 --Arrange
 declare
   l_expected department$;
@@ -7,7 +6,7 @@ declare
 begin
 --Act
   ut.expect( anydata.convertObject(l_actual) ).to_equal( anydata.convertObject(l_expected) );
-  l_result :=  ut_assert_processor.get_aggregate_asserts_result();
+  l_result :=  ut_expectation_processor.get_status();
 --Assert
   if l_result = ut_utils.tr_failure then
     :test_result := ut_utils.tr_success;

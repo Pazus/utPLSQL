@@ -85,14 +85,14 @@ create or replace type body ut_documentation_reporter is
 
   overriding member procedure after_calling_run(self in out nocopy ut_documentation_reporter, a_run in ut_run) as
     l_summary_text   varchar2(4000);
-    procedure print_failure_for_assert(a_assert ut_assert_result) is
+    procedure print_failure_for_expectation(a_expectation ut_expectation_result) is
       l_lines ut_varchar2_list;
     begin
-      l_lines := a_assert.get_result_lines();
+      l_lines := a_expectation.get_result_lines();
       for i in 1 .. l_lines.count loop
         self.print_red_text(l_lines(i));
       end loop;
-      self.print_cyan_text(a_assert.caller_info);
+      self.print_cyan_text(a_expectation.caller_info);
       self.print_text(' ');
     end;
 
@@ -107,8 +107,8 @@ create or replace type body ut_documentation_reporter is
         self.print_red_text(ut_utils.table_to_clob(a_test.get_error_stack_traces()));
 
         for j in 1 .. a_test.results.count loop
-          if a_test.results(j).result > ut_utils.tr_success then
-            print_failure_for_assert(a_test.results(j));
+          if a_test.results(j).status > ut_utils.tr_success then
+            print_failure_for_expectation(a_test.results(j));
           end if;
         end loop;
 

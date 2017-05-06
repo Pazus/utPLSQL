@@ -1,17 +1,15 @@
-#utPLSQL v3<sub><sup> | Powerful PL/SQL Unit Testing Framework </sup></sub>
-[![latest-pre-release](https://img.shields.io/github/tag/utPLSQL/utPLSQL.svg?label=pre-release)](https://github.com/utPLSQL/utPLSQL/releases)
+# utPLSQL v3<sub><sup> | Powerful PL/SQL Unit Testing Framework </sup></sub>
+
 [![latest-release](https://img.shields.io/github/release/utPLSQL/utPLSQL.svg)](https://github.com/utPLSQL/utPLSQL/releases)
-
-[![build](https://img.shields.io/travis/utPLSQL/utPLSQL/master.svg?label=master%20branch)](https://travis-ci.org/utPLSQL/utPLSQL)
-[![build](https://img.shields.io/travis/utPLSQL/utPLSQL/develop.svg?label=develop%20branch)](https://travis-ci.org/utPLSQL/utPLSQL)
-[![sonar](https://sonarqube.com/api/badges/measure?key=utPLSQL%3AutPLSQL&metric=complexity)](https://sonarqube.com/dashboard/index?id=utPLSQL%3AutPLSQL)
-[![sonar](https://sonarqube.com/api/badges/measure?key=utPLSQL%3AutPLSQL&metric=ncloc)](https://sonarqube.com/dashboard/index?id=utPLSQL%3AutPLSQL)
-[![sonar coverage](https://sonarqube.com/api/badges/measure?key=utPLSQL%3AutPLSQL&metric=coverage)](https://sonarqube.com/dashboard/index?id=utPLSQL%3AutPLSQL)
-[![Develop branch coverage](https://coveralls.io/repos/github/utPLSQL/utPLSQL/badge.svg?branch=develop)](https://coveralls.io/github/utPLSQL/utPLSQL?branch=develop)
-
 [![license](http://img.shields.io/badge/license-apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![chat](http://img.shields.io/badge/slack-team--chat-blue.svg)](http://utplsql-slack-invite.herokuapp.com/)
 [![twitter](https://img.shields.io/twitter/follow/utPLSQL.svg?style=social&label=Follow)](https://twitter.com/utPLSQL)
+
+[![build](https://img.shields.io/travis/utPLSQL/utPLSQL/master.svg?label=master%20branch)](https://travis-ci.org/utPLSQL/utPLSQL)
+[![build](https://img.shields.io/travis/utPLSQL/utPLSQL/develop.svg?label=develop%20branch)](https://travis-ci.org/utPLSQL/utPLSQL)
+[![sonar](https://sonarqube.com/api/badges/gate?key=utPLSQL%3AutPLSQL%3Adevelop)](https://sonarqube.com/dashboard/index?id=utPLSQL%3AutPLSQL%3Adevelop)
+[![Coveralls coverage](https://coveralls.io/repos/github/utPLSQL/utPLSQL/badge.svg?branch=develop)](https://coveralls.io/github/utPLSQL/utPLSQL?branch=develop)
+
 ----------
 utPLSQL version 3 is a complete rewrite of utPLSQL v2 from scratch.
 Version 2 still supports older versions of Oracle that are no longer available. 
@@ -119,13 +117,12 @@ sqlplus admin/admins_password@xe @@install_headless.sql
 
 For detailed instructions on other install options see the [Install Guide](docs/userguide/install.md)
 
-# Example test package
+# Example unit test packages
 
-The below test package is a fully-functional Unit Test package for testing a function `betwnstr`.
-Package specification is annotated with special comments ([annotations](docs/userguide/annotations.md)).
+The below test package is a fully-functional Unit Test package for testing a [`betwnstr` function](examples/between_string/betwnstr.sql).
+Package specification is [annotated](docs/userguide/annotations.md) with special comments.
 Annotations define that a package is a unit test suite, they also allow defining a description for the suite as well as the test itself.
 Package body consists of procedures containing unit test code. To validate [an expectation](docs/userguide/expectations.md) in test, use `ut.expect( actual_data ).to_( ... )` syntax.
-
 
 ```sql
 create or replace package test_between_string as
@@ -150,7 +147,7 @@ create or replace package body test_between_string as
 
   procedure normal_case is
   begin
-    ut.expect( betwnstr( '1234567', 2, 5 ) ).to_equal('2345') );
+    ut.expect( betwnstr( '1234567', 2, 5 ) ).to_( equal('2345') );
   end;
 
   procedure zero_start_position is
@@ -172,6 +169,13 @@ end;
 /
 ```
 
+Have a look at the [utPLSQL demo project](https://github.com/utPLSQL/utPLSQL-demo-project/).
+The project is installing few example packages from the [source directory](https://github.com/utPLSQL/utPLSQL-demo-project/tree/develop/source),
+installing the test packages from [test directory](https://github.com/utPLSQL/utPLSQL-demo-project/tree/develop/test)
+and finally executing all the tests using [Travis CI](https://travis-ci.org/utPLSQL/utPLSQL-demo-project).
+The [test results](https://sonarqube.com/component_measures/metric/tests/list?id=utPLSQL%3AutPLSQL-demo-project)
+ together with [code coverage](https://sonarqube.com/component_measures/metric/coverage/list?id=utPLSQL%3AutPLSQL-demo-project)
+ are published to the [projects Sonar page](https://sonarqube.com/dashboard?id=utPLSQL%3AutPLSQL-demo-project) after every successful build.  
 
 # Running tests
 

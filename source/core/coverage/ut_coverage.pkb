@@ -51,7 +51,7 @@ create or replace package body ut_coverage is
   -- The subquery is optimized by:
   -- - COALESCE function -> it will execute only for TRIGGERS
   -- - scalar subquery cache -> it will only execute once for one trigger source code.
-  function get_sources_query return varchar2 is
+  function populate_sources_tmp_table return varchar2 is
     l_result varchar2(32767);
     l_full_name varchar2(100);
   begin
@@ -71,7 +71,7 @@ create or replace package body ut_coverage is
                  coalesce(
                    case when type!='TRIGGER' then 0 end,
                    (select min(t.line) - 1
-                      from dba_source t
+                      from all_source t
                      where t.owner = s.owner and t.type = s.type and t.name = s.name
                        and regexp_like( t.text, '\w*(begin|declare|compound).*','i'))
                  ) as line,
@@ -105,7 +105,7 @@ create or replace package body ut_coverage is
            where s.owner in (select upper(t.column_value) from table(:l_schema_names) t)';
     end if;
     l_result := l_result || q'[
-             and s.type not in ('PACKAGE', 'TYPE')
+             and s.type not in ('PACKAGE', 'TYPE', 'JAVA SOURCE')
              --Exclude calls to utPLSQL framework, Unit Test packages and objects from a_exclude_list parameter of coverage reporter
              and (s.owner, s.name) not in (select el.owner, el.name from table(:l_skipped_objects) el)]';
     if g_include_list is null then
@@ -289,9 +289,9 @@ create or replace package body ut_coverage is
     --prepare global temp table with sources
     delete from ut_coverage_sources_tmp;
     if g_file_mappings is not null then
-      execute immediate get_sources_query() using g_file_mappings, l_skipped_objects, g_include_list;
+      execute immediate populate_sources_tmp_table() using g_file_mappings, l_skipped_objects, g_include_list;
     else
-      execute immediate get_sources_query() using l_schema_names, l_skipped_objects, g_include_list;
+      execute immediate populate_sources_tmp_table() using l_schema_names, l_skipped_objects, g_include_list;
     end if;
     commit;
 

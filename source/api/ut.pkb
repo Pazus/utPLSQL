@@ -17,6 +17,8 @@ create or replace package body ut is
   limitations under the License.
   */
 
+  g_nls_date_format varchar2(4000);
+
   function version return varchar2 is
   begin
     return ut_utils.gc_version;
@@ -24,7 +26,7 @@ create or replace package body ut is
 
   function expect(a_actual in anydata, a_message varchar2 := null) return ut_expectation_anydata is
   begin
-    return ut_expectation_anydata(ut_data_value_anydata(a_actual), a_message);
+    return ut_expectation_anydata(ut_data_value_anydata.get_instance(a_actual), a_message);
   end;
 
   function expect(a_actual in blob, a_message varchar2 := null) return ut_expectation_blob is
@@ -89,7 +91,7 @@ create or replace package body ut is
 
   procedure fail(a_message in varchar2) is
   begin
-    ut_assert_processor.report_failure(a_message);
+    ut_expectation_processor.report_failure(a_message);
   end;
 
   procedure run_autonomous(a_paths ut_varchar2_list, a_reporter ut_reporter_base, a_color_console integer) is
@@ -99,7 +101,7 @@ create or replace package body ut is
     rollback;
   end;
 
-  function run(a_reporter ut_reporter_base := ut_documentation_reporter(), a_color_console integer := 0) return ut_varchar2_list pipelined is
+  function run(a_reporter ut_reporter_base := ut_documentation_reporter(), a_color_console integer := 0) return ut_varchar2_rows pipelined is
     l_reporter  ut_reporter_base := coalesce(a_reporter, ut_documentation_reporter());
     l_paths     ut_varchar2_list := ut_varchar2_list(sys_context('userenv', 'current_schema'));
     l_lines     sys_refcursor;
@@ -115,7 +117,7 @@ create or replace package body ut is
     close l_lines;
   end;
 
-  function run(a_paths ut_varchar2_list, a_reporter ut_reporter_base := ut_documentation_reporter(), a_color_console integer := 0) return ut_varchar2_list pipelined is
+  function run(a_paths ut_varchar2_list, a_reporter ut_reporter_base := ut_documentation_reporter(), a_color_console integer := 0) return ut_varchar2_rows pipelined is
     l_reporter  ut_reporter_base := coalesce(a_reporter, ut_documentation_reporter());
     l_lines     sys_refcursor;
     l_line      varchar2(4000);
@@ -130,7 +132,7 @@ create or replace package body ut is
     close l_lines;
   end;
 
-  function run(a_path varchar2, a_reporter ut_reporter_base := ut_documentation_reporter(), a_color_console integer := 0) return ut_varchar2_list pipelined is
+  function run(a_path varchar2, a_reporter ut_reporter_base := ut_documentation_reporter(), a_color_console integer := 0) return ut_varchar2_rows pipelined is
     l_reporter  ut_reporter_base := coalesce(a_reporter, ut_documentation_reporter());
     l_paths     ut_varchar2_list := ut_varchar2_list(coalesce(a_path, sys_context('userenv', 'current_schema')));
     l_lines     sys_refcursor;
@@ -162,6 +164,25 @@ create or replace package body ut is
     l_paths  ut_varchar2_list := ut_varchar2_list(coalesce(a_path, sys_context('userenv', 'current_schema')));
   begin
     ut.run(l_paths, a_reporter, a_color_console);
+  end;
+
+  procedure set_nls is
+  begin
+    if g_nls_date_format is null then
+      select nsp.value
+       into g_nls_date_format
+       from nls_session_parameters nsp
+      where parameter = 'NLS_DATE_FORMAT';
+    end if;
+    execute immediate 'alter session set nls_date_format = '''||ut_utils.gc_date_format||'''';
+  end;
+
+  procedure reset_nls is
+  begin
+    if g_nls_date_format is not null then
+      execute immediate 'alter session set nls_date_format = '''||g_nls_date_format||'''';
+    end if;
+    g_nls_date_format := null;
   end;
 
 end ut;

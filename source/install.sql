@@ -35,6 +35,7 @@ whenever oserror exit failure rollback
 
 --common utilities
 @@core/types/ut_varchar2_list.tps
+@@core/types/ut_varchar2_rows.tps
 @@core/types/ut_object_name.tps
 @@core/types/ut_object_name.tpb
 @@core/types/ut_object_names.tps
@@ -48,8 +49,8 @@ whenever oserror exit failure rollback
 @@reporters/ut_ansiconsole_helper.pkb
 
 --core types
-@@core/types/ut_assert_result.tps
-@@core/types/ut_assert_results.tps
+@@core/types/ut_expectation_result.tps
+@@core/types/ut_expectation_results.tps
 @@core/types/ut_results_counter.tps
 @@core/types/ut_suite_item_base.tps
 @@core/types/ut_event_listener_base.tps
@@ -79,9 +80,9 @@ whenever oserror exit failure rollback
 @@core/ut_suite_manager.pks
 @@core/ut_suite_manager.pkb
 
---assertios execution state interface
-@@core/ut_assert_processor.pks
-@@core/ut_assert_processor.pkb
+--expectationios execution state interface
+@@core/ut_expectation_processor.pks
+@@core/ut_expectation_processor.pkb
 
 --installing profiler tabs if they dont exist
 whenever sqlerror continue
@@ -107,15 +108,18 @@ whenever sqlerror exit failure rollback
 @@core/types/ut_suite.tpb
 @@core/types/ut_run.tpb
 @@core/types/ut_event_listener.tpb
-@@core/types/ut_assert_result.tpb
+@@core/types/ut_expectation_result.tpb
 @@core/types/ut_reporter_base.tpb
 @@core/types/ut_executable.tpb
 @@core/types/ut_console_reporter_base.tps
 @@core/types/ut_console_reporter_base.tpb
 
 --expectations and matchers
+@@expectations/data_values/ut_cursor_data.sql
 @@expectations/data_values/ut_data_value.tps
 @@expectations/data_values/ut_data_value_anydata.tps
+@@expectations/data_values/ut_data_value_collection.tps
+@@expectations/data_values/ut_data_value_object.tps
 @@expectations/data_values/ut_data_value_blob.tps
 @@expectations/data_values/ut_data_value_boolean.tps
 @@expectations/data_values/ut_data_value_clob.tps
@@ -156,7 +160,10 @@ whenever sqlerror exit failure rollback
 @@expectations/ut_expectation_timestamp_tz.tps
 @@expectations/ut_expectation_varchar2.tps
 @@expectations/ut_expectation_yminterval.tps
+@@expectations/data_values/ut_data_value.tpb
 @@expectations/data_values/ut_data_value_anydata.tpb
+@@expectations/data_values/ut_data_value_object.tpb
+@@expectations/data_values/ut_data_value_collection.tpb
 @@expectations/data_values/ut_data_value_blob.tpb
 @@expectations/data_values/ut_data_value_boolean.tpb
 @@expectations/data_values/ut_data_value_clob.tpb
@@ -217,7 +224,8 @@ whenever sqlerror exit failure rollback
 @@reporters/ut_teamcity_reporter.tpb
 @@reporters/ut_xunit_reporter.tps
 @@reporters/ut_xunit_reporter.tpb
-
+@@reporters/ut_sonar_test_reporter.tps
+@@reporters/ut_sonar_test_reporter.tpb
 
 @@reporters/ut_coverage_html_reporter.tps
 @@reporters/ut_coverage_report_html_helper.pks
