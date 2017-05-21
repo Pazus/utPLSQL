@@ -1,4 +1,20 @@
 create or replace package body ut_output_buffer is
+  /*
+  utPLSQL - Version X.X.X.X
+  Copyright 2016 - 2017 utPLSQL Project
+
+  Licensed under the Apache License, Version 2.0 (the "License"):
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+  */
 
   procedure send_line(a_reporter ut_reporter_base, a_text varchar2) is
     l_text_list  ut_varchar2_list;
@@ -7,11 +23,12 @@ create or replace package body ut_output_buffer is
     if a_reporter is not null and a_reporter.reporter_id is not null and a_reporter.start_date is not null and a_text is not null then
       if length(a_text) > ut_utils.gc_max_storage_varchar2_len then
         l_text_list := ut_utils.clob_to_table(a_text, ut_utils.gc_max_storage_varchar2_len);
-        forall i in 1 .. l_text_list.count
-          insert into ut_output_buffer_tmp(start_date, reporter_id, message_id, text)
-          values (a_reporter.start_date, a_reporter.reporter_id, ut_message_id_seq.nextval, l_text_list(i));
+        insert /*+ append */
+          into ut_output_buffer_tmp(start_date, reporter_id, message_id, text)
+        select a_reporter.start_date, a_reporter.reporter_id, ut_message_id_seq.nextval, t.column_value
+          from table(l_text_list) t;
       else
-        insert into ut_output_buffer_tmp(start_date, reporter_id, message_id, text)
+        insert /*+ append */ into ut_output_buffer_tmp(start_date, reporter_id, message_id, text)
         values (a_reporter.start_date, a_reporter.reporter_id, ut_message_id_seq.nextval, a_text);
       end if;
       commit;
@@ -21,7 +38,7 @@ create or replace package body ut_output_buffer is
   procedure close(a_reporter ut_reporter_base) is
     pragma autonomous_transaction;
   begin
-    insert into ut_output_buffer_tmp(start_date, reporter_id, message_id, is_finished)
+    insert /*+ append */ into ut_output_buffer_tmp(start_date, reporter_id, message_id, is_finished)
     values (a_reporter.start_date, a_reporter.reporter_id, ut_message_id_seq.nextval, 1);
     commit;
   end;
@@ -31,34 +48,39 @@ create or replace package body ut_output_buffer is
   begin
     if a_reporters is not null then
       forall i in 1 .. a_reporters.count
-        insert into ut_output_buffer_tmp(start_date, reporter_id, message_id, is_finished)
+        insert /*+ append */ into ut_output_buffer_tmp(start_date, reporter_id, message_id, is_finished)
         values (a_reporters(i).start_date, a_reporters(i).reporter_id, ut_message_id_seq.nextval, 1);
     end if;
     commit;
   end;
 
-  function get_lines(a_reporter_id varchar2, a_timeout_sec naturaln := gc_max_wait_sec) return ut_varchar2_list pipelined is
-    pragma autonomous_transaction;
-    l_results        ut_varchar2_list;
+  function get_lines(a_reporter_id varchar2, a_timeout_sec naturaln := gc_max_wait_sec) return ut_varchar2_rows pipelined is
+    l_buffer_data    ut_varchar2_rows;
     l_wait_wait_time number(10,1) := 0;
     l_finished       boolean := false;
-  begin
-    loop
+    function get_data_from_buffer return ut_varchar2_rows is
+      l_results        ut_varchar2_rows;
+      pragma autonomous_transaction;
+    begin
       delete from (
         select *
           from ut_output_buffer_tmp where reporter_id = a_reporter_id order by message_id
         )
       returning text bulk collect into l_results;
-
+      commit;
+      return l_results;
+    end;
+  begin
+    loop
+      l_buffer_data := get_data_from_buffer();
       --nothing fetched from output, wait and try again
-      if l_results.count = 0 then
+      if l_buffer_data.count = 0 then
         dbms_lock.sleep(gc_sleep_time);
         l_wait_wait_time := l_wait_wait_time + gc_sleep_time;
       else
-        commit;
-        for i in 1 .. l_results.count loop
-          if l_results(i) is not null then
-            pipe row(l_results(i));
+        for i in 1 .. l_buffer_data.count loop
+          if l_buffer_data(i) is not null then
+            pipe row(l_buffer_data(i));
           else
             l_finished := true;
             exit;
@@ -86,8 +108,8 @@ create or replace package body ut_output_buffer is
     l_lines := ut_output_buffer.get_lines_cursor(a_reporter_id, a_timeout_sec);
     loop
       fetch l_lines into l_line;
-      dbms_output.put_line(l_line);
       exit when l_lines%notfound;
+      dbms_output.put_line(l_line);
     end loop;
     close l_lines;
   end;
@@ -95,9 +117,11 @@ create or replace package body ut_output_buffer is
   procedure cleanup_buffer(a_retention_time_sec naturaln := gc_buffer_retention_sec) is
     l_retention_days number := a_retention_time_sec / (60 * 60 * 24);
     l_max_retention_date date := sysdate - l_retention_days;
+    pragma autonomous_transaction; -- the cleanup should initiate transaction
   begin
     delete from ut_output_buffer_tmp t
      where t.start_date <= l_max_retention_date;
+    commit;
   end;
 
 end;

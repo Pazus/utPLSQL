@@ -1,7 +1,7 @@
 create or replace package demo_expectations is
 
   -- %suite
-  -- %displayname(Demoing asserts)
+  -- %displayname(Demoing expectations)
 
   -- %test
   -- %displayname(demo of expectations with nulls)
@@ -32,11 +32,11 @@ create or replace package demo_expectations is
   procedure demo_to_be_null_failure;
 
   -- %test
-  -- %displayname(demo of failure for to_be_null expectation )
+  -- %displayname(demo of success for to_be_null expectation )
   procedure demo_to_be_null_success;
 
   -- %test
-  -- %displayname(demo of success for to_be_not_null expectation )
+  -- %displayname(demo of failure for to_be_not_null expectation )
   procedure demo_to_be_not_null_failure;
 
   -- %test
@@ -546,6 +546,12 @@ create or replace package body demo_expectations is
     ut.expect(sysdate).not_to( be_between(sysdate+1,sysdate+2) );
     ut.expect( 1 ).not_to( equal( 2 ) );
     ut.expect( 'asd' ).not_to( be_like('z%q') );
+    
+    ut.expect( sysdate ).not_to_be_null();
+    ut.expect( to_char(null) ).not_to_be_not_null();
+    ut.expect(sysdate).not_to_be_between(sysdate+1,sysdate+2);
+    ut.expect( 1 ).not_to_equal( 2 );
+    ut.expect( 'asd' ).not_to_be_like('z%q');
   end;
 
 end;
