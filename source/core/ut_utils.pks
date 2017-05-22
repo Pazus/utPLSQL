@@ -19,7 +19,7 @@ create or replace package ut_utils authid definer is
   /*
     Package: ut_utils
      a collection of tools used throught utplsql along with helper functions.
-  
+
   */
 
   gc_version                 constant varchar2(50) := 'utPLSQL - Version X.X.X.X';
@@ -54,11 +54,10 @@ create or replace package ut_utils authid definer is
   gc_rollback_manual         constant number(1) := 1; -- leave transaction control manual
   --gc_rollback_on_error       constant number(1) := 2; -- rollback tests only on error
 
-  -- utPLSQ Exceptions
   ex_unsupported_rollback_type exception;
   gc_unsupported_rollback_type constant pls_integer := -20200;
   pragma exception_init(ex_unsupported_rollback_type, -20200);
-  
+
   ex_path_list_is_empty exception;
   gc_path_list_is_empty constant pls_integer := -20201;
   pragma exception_init(ex_path_list_is_empty, -20201);
@@ -81,10 +80,6 @@ create or replace package ut_utils authid definer is
   gc_invalid_rep_event_name constant pls_integer := -20211;
   pragma exception_init(ex_invalid_rep_event_name, -20211);
 
-  ex_package_already_migrated exception;
-  pragma exception_init(ex_package_already_migrated, -20400);
-  ex_package_parsing_failed exception;
-  pragma exception_init(ex_package_parsing_failed, -20401);
 
   gc_max_storage_varchar2_len constant integer := 4000;
   gc_max_output_string_length constant integer := 4000;
@@ -99,13 +94,13 @@ create or replace package ut_utils authid definer is
   /*
      Function: test_result_to_char
         returns a string representation of a test_result.
-  
+
      Parameters:
           a_test_result - <test_result>.
-  
+
      Returns:
         a_test_result as string.
-  
+
   */
   function test_result_to_char(a_test_result integer) return varchar2;
 

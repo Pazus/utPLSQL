@@ -7,7 +7,7 @@ create or replace package body ut_v2_migration is
     l_setup_proc           varchar2(128 char);
     l_teardown_proc        varchar2(128 char);
     l_repalce_pattern      varchar2(50);
-    l_suite                ut_test_suite;
+    l_suite                ut_logical_suite;
     l_suite_desc           varchar2(4000);
     l_suite_package        varchar2(4000); 
   begin
@@ -137,14 +137,14 @@ create or replace package body ut_v2_migration is
         end if;
         
       exception 
-        when ut_utils.ex_package_already_migrated then
+        when ex_package_already_migrated then
           ut_utils.debug_log('[IGNORE] Package ' || rec.owner || '.' || rec.name || ' already migrated');
           if not a_compile_flag then
             dbms_output.put('--');
           end if;
           dbms_output.put_line('Package ' || rec.owner || '.' || rec.name ||  ' already migrated. Package is skipped');
           l_items_skipped := l_items_skipped +1;
-        when ut_utils.ex_package_parsing_failed then
+        when ex_package_parsing_failed then
           ut_utils.debug_log('[ERROR] Package ' || rec.owner || '.' || rec.name || ' parsing failed');
           
           if not a_compile_flag then
