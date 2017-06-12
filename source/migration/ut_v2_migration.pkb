@@ -119,6 +119,7 @@ create or replace package body ut_v2_migration is
                    and o.object_type in ('PACKAGE')
                    and p.owner = nvl(a_owner_name, p.owner)
                    and p.name = nvl(a_package_name, p.name)
+                   and upper(p.name) like upper(nvl(p.prefix, c.prefix))||'%'
     ) loop
       begin
         l_items_processed := l_items_processed +1;
