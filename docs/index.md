@@ -9,22 +9,28 @@ The framework follows industry standards and best patterns of modern Unit Testin
        - [Annotations](userguide/annotations.md)
        - [Expectations](userguide/expectations.md)
        - [Running unit tests](userguide/running-unit-tests.md)
-       - [Using the ut_run script](userguide/ut_run-script.md)
        - [Testing best pracitces](userguide/best-practices.md)
        - [Upgrade utPLSQL](userguide/upgrade.md)
   - Reporting
        - [Using reporters](userguide/reporters.md)
        - [Reporting errors](userguide/exception-reporting.md)
        - [Code coverage](userguide/coverage.md)
+  - [Cheat-sheet](https://www.cheatography.com/jgebal/cheat-sheets/utplsql-v3/#downloads)
   - About
        - [Project Details](about/project-details.md)
        - [License](about/license.md)
        - [Support](about/support.md)
        - [Authors](about/authors.md)
        - [Contributing](about/CONTRIBUTING.md)
+       
+# Demo project
 
+Have a look at our [demo project](https://github.com/utPLSQL/utPLSQL-demo-project/).
+
+It uses [Travis CI](https://travis-ci.org/utPLSQL/utPLSQL-demo-project) to build on every commit, runs all tests, publishes test results and code coverage to [SonarQube](https://sonarqube.com/dashboard?id=utPLSQL%3AutPLSQL-demo-project%3Adevelop).
 
 # Three steps
+
 With just three simple steps you can define and run your unit tests for PLSQL code.
  
 1. Install the utPLSQL framework 
@@ -38,19 +44,22 @@ Here is how you can simply create tested code, unit tests and execute the tests 
 Check out the sections on [annotations](userguide/annotations.md) and [expectations](userguide/expectations.md) to see how to define your tests.  
 
 
-# Command line 
-The `ut_run.sql` script is a powerful thing - it can provide output from the tests on the fly.
-You can also use it to have coloured output from the test, and if you try to test code that was dropper, all of unit tests related to that code will fail.
+# Command line
+ 
+The `ut_run` (for linux/unix) and `ut_run.bat` (for windows) are simple yet powerful.
+They can provide output from the tests on the fly. 
 
-![colors_and_failures](images/running_from_command_line.gif)
+You can also use it to have coloured outputs.
 
-Look into [ut_run.sql script options](userguide/ut_run-script.md) to see more.
+Look into [utPLSQL-sql-cli](https://github.com/utPLSQL/utPLSQL-sql-cli) project to see more.
 
 # Coverage
-If you want to have code coverage gathered on your code , it's best to use `ut_run.sql` to execute your tests with multiple reporters and have both test execution report as well as coverage report saved to a file.
+
+If you want to have code coverage gathered on your code , it's best to use `ut_run` to execute your tests with multiple reporters and have both test execution report as well as coverage report saved to a file.
+
 Check out the [coverage documentation](userguide/coverage.md) for options of coverage reporting
 
-![coverage](images/running_with_coverage_line.gif)
+
 
     
 

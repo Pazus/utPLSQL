@@ -25,13 +25,13 @@ set define &
 spool install.log
 
 define ut3_owner = &1
+whenever sqlerror exit failure rollback
+whenever oserror exit failure rollback
+
 alter session set current_schema = &&ut3_owner;
 alter session set plsql_warnings = 'ENABLE:ALL', 'DISABLE:(6000,6001,6003,6010, 7206)';
 set define off
 
-
-whenever sqlerror exit failure rollback
-whenever oserror exit failure rollback
 
 --common utilities
 @@core/types/ut_varchar2_list.tps
@@ -60,6 +60,9 @@ whenever oserror exit failure rollback
 @@core/types/ut_test.tps
 @@core/types/ut_logical_suite.tps
 @@core/types/ut_suite.tps
+@@core/types/ut_file_mapping.tps
+@@core/types/ut_file_mappings.tps
+@@core/types/ut_coverage_options.tps
 @@core/types/ut_run.tps
 @@core/types/ut_reporter_base.tps
 @@core/types/ut_reporters.tps
@@ -89,12 +92,14 @@ whenever sqlerror continue
 @@core/coverage/proftab.sql
 whenever sqlerror exit failure rollback
 
+@@core/ut_file_mapper.pks
+@@core/ut_file_mapper.pkb
+
+
 --gathering coverage
 @@core/coverage/ut_coverage_sources_tmp.sql
 @@core/coverage/ut_coverage_helper.pks
 @@core/coverage/ut_coverage_helper.pkb
-@@core/coverage/ut_coverage_file_mapping.tps
-@@core/coverage/ut_coverage_file_mappings.tps
 @@core/coverage/ut_coverage.pks
 @@core/coverage/ut_coverage.pkb
 @@core/coverage/ut_coverage_reporter_base.tps
@@ -110,6 +115,7 @@ whenever sqlerror exit failure rollback
 @@core/types/ut_event_listener.tpb
 @@core/types/ut_expectation_result.tpb
 @@core/types/ut_reporter_base.tpb
+@@core/types/ut_file_mapping.tpb
 @@core/types/ut_executable.tpb
 @@core/types/ut_console_reporter_base.tps
 @@core/types/ut_console_reporter_base.tpb

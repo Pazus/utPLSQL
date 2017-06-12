@@ -21,38 +21,7 @@ create or replace type ut_coverage_sonar_reporter under ut_coverage_reporter_bas
   * https://docs.sonarqube.org/display/SONAR/Generic+Test+Data
   */
   constructor function ut_coverage_sonar_reporter(
-    self in out nocopy ut_coverage_sonar_reporter,
-    a_schema_names ut_varchar2_list := null,
-    a_include_object_list ut_varchar2_list := null,
-    a_exclude_object_list ut_varchar2_list := null
-  ) return self as result,
-
-  constructor function ut_coverage_sonar_reporter(
-    self in out nocopy ut_coverage_sonar_reporter,
-    a_object_owner varchar2 := null,
-    a_file_paths ut_varchar2_list,
-    a_regex_pattern varchar2,
-    a_object_owner_subexpression positive,
-    a_object_name_subexpression positive,
-    a_object_type_subexpression positive,
-    a_file_to_object_type_mapping ut_key_value_pairs,
-    a_include_object_list ut_varchar2_list := null,
-    a_exclude_object_list ut_varchar2_list := null
-  ) return self as result,
-
-  constructor function ut_coverage_sonar_reporter(
-    self in out nocopy ut_coverage_sonar_reporter,
-    a_object_owner varchar2 := null,
-    a_file_paths ut_varchar2_list,
-    a_include_object_list ut_varchar2_list := null,
-    a_exclude_object_list ut_varchar2_list := null
-  ) return self as result,
-
-  constructor function ut_coverage_sonar_reporter(
-    self in out nocopy ut_coverage_sonar_reporter,
-    a_file_mappings       ut_coverage_file_mappings,
-    a_include_object_list ut_varchar2_list := null,
-    a_exclude_object_list ut_varchar2_list := null
+    self in out nocopy ut_coverage_sonar_reporter
   ) return self as result,
 
   overriding member procedure after_calling_run(self in out nocopy ut_coverage_sonar_reporter, a_run in ut_run)

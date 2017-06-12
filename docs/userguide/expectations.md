@@ -1,9 +1,9 @@
 # Concepts 
 
 Validation of the code under test (the tested logic of procedure/function etc.) is performed by comparing the actual data against the expected data.
-To do that we use concept of expectation and a matcher to perform the check on the data.
+To achieve that, we use a combination of expectation and matcher to perform the check on the data.
 
-Example of unit test procedure body with a single expectation.
+Example of unit test procedure body.
 ```sql
 begin
   ut.expect( 'the tested value' ).to_( equal('the expected value') );
@@ -14,14 +14,20 @@ Expectation is a set of the expected value(s), actual values(s) and the matcher(
 
 Matcher is defining the comparison operation to be performed on expected and actual values.
 Pseudo-code:
-```sql
+```
   ut.expect( a_actual {data-type} ).to_( {matcher} );
   ut.expect( a_actual {data-type} ).not_to( {matcher} );
 ```
 
+All matchers have shortcuts like:
+```
+  ut.expect( a_actual {data-type} ).to_{matcher};
+  ut.expect( a_actual {data-type} ).not_to_{matcher};
+```
 
 # Matchers
 utPLSQL provides following matchers to perform checks on the expected and actual values.  
+
 - `be_between`
 - `be_empty`
 - `be_false`
@@ -42,8 +48,11 @@ Validates that the actual value is between the lower and upper bound.
 Example:
 ```sql
 begin
+  ut.expect( a_actual => 3 ).to_be_between( a_lower_bound => 1, a_upper_bound => 3 );
+  ut.expect( 3 ).to_be_between( 1, 3 );
+  --or
   ut.expect( a_actual => 3 ).to_( be_between( a_lower_bound => 1, a_upper_bound => 3 ) );
-  ut.expect( 3 ).to_( be_between( 1, 3 ) );
+  ut.expect( 3 ).to_( be_between( 1, 3 ) );  
 end;
 ```
 
@@ -56,6 +65,8 @@ procedure test_if_cursor_is_empty is
   l_cursor sys_refcursor;
 begin
   open l_cursor for select * from dual where 1 = 0;
+  ut.expect( l_cursor ).to_be_empty();
+  --or
   ut.expect( l_cursor ).to_( be_empty() );
 end;
 ```
@@ -68,6 +79,8 @@ Unary matcher that validates if the provided value is false.
 Usage:
 ```sql
 begin
+  ut.expect( ( 1 = 0 ) ).to_be_false();
+  --or 
   ut.expect( ( 1 = 0 ) ).to_( be_false() );
 end;
 ```
@@ -78,6 +91,8 @@ Allows to check if the actual value is greater or equal than the expected.
 Usage:
 ```sql
 begin
+  ut.expect( sysdate ).to_be_greater_or_equal( sysdate - 1 );
+  --or
   ut.expect( sysdate ).to_( be_greater_or_equal( sysdate - 1 ) );
 end;
 ```
@@ -88,6 +103,8 @@ Allows to check if the actual value is greater than the expected.
 Usage:
 ```sql
 begin
+  ut.expect( 2 ).to_be_greater_than( 1 );
+  --or 
   ut.expect( 2 ).to_( be_greater_than( 1 ) );
 end;
 ```
@@ -98,6 +115,8 @@ Allows to check if the actual value is less or equal than the expected.
 Usage:
 ```sql
 begin
+  ut.expect( 3 ).to_be_less_or_equal( 3 );
+  --or 
   ut.expect( 3 ).to_( be_less_or_equal( 3 ) );
 end;
 ```
@@ -108,6 +127,8 @@ Allows to check if the actual value is less than the expected.
 Usage:
 ```sql
 begin
+  ut.expect( 3 ).to_be_less_than( 2 );
+  --or 
   ut.expect( 3 ).to_( be_less_than( 2 ) );
 end;
 ```
@@ -119,8 +140,11 @@ Validates that the actual value is like the expected expression.
 Usage:
 ```sql
 begin
-  ut.expect( 'Lorem_impsum' ).to_( be_like( a_mask => '%rem\_%', a_escape_char => '\' ) );
-  ut.expect( 'Lorem_impsum' ).to_( be_like( '%rem\_%', '\' ) );
+  ut.expect( 'Lorem_impsum' ).to_be_like( a_mask => '%rem#_%', a_escape_char => '#' );
+  ut.expect( 'Lorem_impsum' ).to_be_like( '%rem#_%', '#' );
+  --or 
+  ut.expect( 'Lorem_impsum' ).to_( be_like( a_mask => '%rem#_%', a_escape_char => '#' ) );
+  ut.expect( 'Lorem_impsum' ).to_( be_like( '%rem#_%', '#' ) );
 end;
 ```
 
@@ -133,7 +157,11 @@ Unary matcher that validates if the actual value is not null.
 Usage:
 ```sql
 begin 
+  ut.expect( to_clob('ABC') ).to_be_not_null();
+  --or 
   ut.expect( to_clob('ABC') ).to_( be_not_null() );
+  --or 
+  ut.expect( to_clob('ABC') ).not_to( be_null() );
 end;
 ```
 
@@ -143,6 +171,8 @@ Unary matcher that validates if the actual value is null.
 Usage:
 ```sql
 begin
+  ut.expect( cast(null as varchar2(100)) ).to_be_null();
+  --or 
   ut.expect( cast(null as varchar2(100)) ).to_( be_null() );
 end;
 ```
@@ -154,6 +184,8 @@ Unary matcher that validates if the provided value is false.
 Usage:
 ```sql
 begin 
+  ut.expect( ( 1 = 1 ) ).to_be_true();
+  --or 
   ut.expect( ( 1 = 1 ) ).to_( be_true() );
 end;
 ```
@@ -167,10 +199,13 @@ This matcher is designed to capture changes of data-type, so that if you expect 
 
 Usage:
 ```sql
-procedure check_if_cursors_are_equal is
-  x sys_refcursor;
-  y sys_refcursor;
+declare
+  x varchar2(100);
+  y varchar2(100);
 begin
+  ut.expect( 'a dog' ).to_equal( 'a dog' );
+  ut.expect( a_actual => y ).to_equal( a_expected => x, a_nulls_are_equal => true );
+  --or 
   ut.expect( 'a dog' ).to_( equal( 'a dog' ) );
   ut.expect( a_actual => y ).to_( equal( a_expected => x, a_nulls_are_equal => true ) );
 end;
@@ -193,13 +228,21 @@ procedure test_cursors_skip_columns is
 begin
   open x for select 'text' ignore_me, d.* from user_tables d;
   open y for select sysdate "ADate", d.* from user_tables d;
-  ut.expect( a_actual => y ).to_( equal( a_expected => x, a_exclude => 'IGNORE_ME,ADate' ) );
+  ut.expect( a_actual => y ).to_equal( a_expected => x, a_exclude => 'IGNORE_ME,ADate' );
 end;
 ```
+
+### Using cursors to compare PLSQL records on Oracle 12c
+
+There is a great article by Tim Hall on [using the TABLE Operator with Locally Defined Types in PL/SQL](https://oracle-base.com/articles/12c/using-the-table-operator-with-locally-defined-types-in-plsql-12cr1).
+If you are on Oracle 12c, you can benefit from this feature to make comparison of PLSQL records and tables super-simple in utPLSQL.
+You can use the feature described in article to convert PLSQL records and collection types to cursors. Complex cursor data can then be compared in utPLQL.  
+
 
 ### Comparing cursor data containing DATE fields 
 
 **Important note**
+
 utPLSQL uses XMLType internally to represent rows of the cursor data. This is by far most flexible and allows comparison of cursors containing LONG, CLOB, BLOB, user defined types and even nested cursors.
 Due to the way Oracle handles DATE data type when converting from cursor data to XML, utPLSQL has no control over the DATE formatting.
 The NLS_DATE_FORMAT setting from the moment the cursor was opened decides ont the formatting of dates used for cursor data comparison.
@@ -261,8 +304,8 @@ create or replace package body test_get_events is
     l_actual := get_events(gc_event_date-1, gc_event_date+1);
     ut.reset_nls();
 
-    ut.expect(l_actual).to_( equal(l_expected) );                        
-    ut.expect(l_actual).not_to( equal(l_expected_bad_date) );                        
+    ut.expect(l_actual).to_equal(l_expected);                        
+    ut.expect(l_actual).not_to_equal(l_expected_bad_date);
   end;
 
 end;
@@ -282,7 +325,7 @@ drop package test_get_events;
 
 The `anydata` data type is used to compare user defined object and collections.
   
-Example usage of anydata to compare user defined types.
+Example:
 ```sql
 create type department as object(name varchar2(30));
 /
@@ -309,7 +352,7 @@ create or replace package body demo_dept as
   begin
     v_expected := department('HR');
     v_actual   := department('IT');
-    ut.expect( anydata.convertObject(v_expected) ).to_( equal( anydata.convertObject(v_actual) ) );
+    ut.expect( anydata.convertObject(v_expected) ).to_equal( anydata.convertObject(v_actual) );
   end;
   
   procedure test_department is
@@ -318,7 +361,7 @@ create or replace package body demo_dept as
   begin
     v_expected := departments(department('HR'));
     v_actual   := departments(department('IT'));
-    ut.expect( anydata.convertCollection(v_expected) ).to_( equal( anydata.convertCollection(v_actual) ) );
+    ut.expect( anydata.convertCollection(v_expected) ).to_equal( anydata.convertCollection(v_actual) );
   end;
 
 end;
@@ -333,6 +376,9 @@ Validates that the actual value is matching the expected regular expression.
 Usage:
 ```sql
 begin 
+  ut.expect( a_actual => '123-456-ABcd' ).to_match( a_pattern => '\d{3}-\d{3}-[a-z]', a_modifiers => 'i' );
+  ut.expect( 'some value' ).to_match( '^some.*' );
+  --or 
   ut.expect( a_actual => '123-456-ABcd' ).to_( match( a_pattern => '\d{3}-\d{3}-[a-z]', a_modifiers => 'i' ) );
   ut.expect( 'some value' ).to_( match( '^some.*' ) );
 end;
@@ -364,19 +410,21 @@ Below matrix illustrates the data types supported by different matchers.
 
 
 
-# Negating the matcher
-Expectations provide a very convenient way to check for a negative of the expectation.
+# Negating a matcher
+Expectations provide a very convenient way to perform a check on negated matcher.
 
 Syntax of check for matcher evaluating to true:
 ```sql
 begin 
+  ut.expect( a_actual {data-type} ).to_{matcher};
   ut.expect( a_actual {data-type} ).to_( {matcher} );
 end;
 ```
 
 Syntax of check for matcher evaluating to false:
 ```sql
-begin 
+begin
+  ut.expect( a_actual {data-type} ).not_to_{matcher};
   ut.expect( a_actual {data-type} ).not_to( {matcher} );
 end;
 ```
@@ -390,7 +438,5 @@ begin
   ut.expect( null ).not_to( be_true() );
 end;
 ```
-
 Since NULL is neither true not it is not true, both expectations will report failure. 
-
 
