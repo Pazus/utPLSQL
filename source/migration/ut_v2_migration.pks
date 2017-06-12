@@ -1,4 +1,4 @@
-create or replace package ut_v2_migration is
+create or replace package ut_v2_migration authid current_user is
 
   /*
     procedure: upgrade_v2_package_spec
