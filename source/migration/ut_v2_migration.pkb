@@ -33,12 +33,12 @@ create or replace package body ut_v2_migration is
       l_suite_package := chr(10)||'  -- %suitepath('||trim(a_parent_suite)||')';
     end if;
 
-    if not regexp_like(l_source,'\A(\s*(CREATE\s+(OR\s+REPLACE)?(\s+(NON)?EDITIONABLE)?\s+)?PACKAGE\s+)"'||l_resolved_owner||'"."'||l_resolved_object_name||'"(\s+(AS|IS))','i') then
+    if not regexp_like(l_source,'\A(\s*(CREATE\s+(OR\s+REPLACE)?(\s+(NON)?EDITIONABLE)?\s+)?PACKAGE\s+)"'||l_resolved_owner||'"."'||l_resolved_object_name||'"([^;]*?(AS|IS))','i') then
       raise_application_error(-20401,'Could not parse the package');
     end if;
 
     l_source := regexp_replace(srcstr     => l_source
-                              ,pattern    => '\A(\s*(CREATE\s+(OR\s+REPLACE)?(\s+(NON)?EDITIONABLE)?\s+)?PACKAGE\s+)"'||l_resolved_owner||'"."'||l_resolved_object_name||'"(\s+(AS|IS))'
+                              ,pattern    => '\A(\s*(CREATE\s+(OR\s+REPLACE)?(\s+(NON)?EDITIONABLE)?\s+)?PACKAGE\s+)"'||l_resolved_owner||'"."'||l_resolved_object_name||'"([^;]*?(AS|IS))'
                               ,replacestr => '\1' || l_resolved_owner || '.' || l_resolved_object_name || '\6' || chr(10) || chr(10) || '  -- %suite' || l_suite_desc ||
                                              l_suite_package || chr(10) || chr(10)
                               ,modifier   => 'i'
