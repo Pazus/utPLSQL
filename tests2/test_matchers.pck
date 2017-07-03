@@ -31,6 +31,15 @@ create or replace package test_matchers is
   
   --%test
   procedure test_be_like;
+  
+  --%test
+  procedure test_timestamp_between;
+  
+  --%test
+  procedure test_timestamp_ltz_between;
+  
+  --%test
+  procedure test_timestamp_tz_between;
 
 end test_matchers;
 /
@@ -398,72 +407,82 @@ begin ut.expect( l_actual ).'||a_not_prefix||'to_match(l_pattern, l_modifiers); 
   procedure test_be_empty_cursor is
     l_cursor sys_refcursor;
     l_result         integer;
+    l_assert_results ut_expectation_results;
   begin
+    open l_cursor for select * from dual where 1 = 2;
+    ut.expect(l_cursor).to_be_empty;
+    
+    l_assert_results := ut_expectation_processor.get_expectations_results;
     open l_cursor for select * from dual where 1 = 1;
-    ut.expect(l_cursor).to_(be_empty);
-    close l_cursor;
+    ut.expect(l_cursor).to_be_empty;
+
     l_result := ut_expectation_processor.get_status;
-    ut_expectation_processor.clear_expectations;
+    restore_asserts(l_assert_results);
     
-    ut.expect(l_result).to_equal(ut_utils.tr_failure);
-    
-    open l_cursor for select * from dual where 1 != 1;
-    ut.expect(l_cursor).to_(be_empty);
-    close l_cursor;
+    ut.expect(l_result,'Expect cursor to be not empty').to_equal(ut_utils.tr_failure);
   end;
   
   procedure test_be_nonempty_cursor is
     l_cursor sys_refcursor;
     l_result         integer;
+    l_assert_results ut_expectation_results;
   begin
-    open l_cursor for select * from dual where 1 != 1;
-    ut.expect(l_cursor).not_to(be_empty);
-    close l_cursor;
-    l_result := ut_expectation_processor.get_status;
-    ut_expectation_processor.clear_expectations;
-    
-    ut.expect(l_result).to_equal(ut_utils.tr_failure);
-    
     open l_cursor for select * from dual where 1 = 1;
-    ut.expect(l_cursor).not_to(be_empty);
-    close l_cursor;
+    ut.expect(l_cursor).not_to_be_empty;
+    
+    l_assert_results := ut_expectation_processor.get_expectations_results;
+    open l_cursor for select * from dual where 1 = 2;
+    ut.expect(l_cursor).not_to_be_empty;
+
+    l_result := ut_expectation_processor.get_status;
+    restore_asserts(l_assert_results);
+    
+    ut.expect(l_result,'Expect cursor to be empty').to_equal(ut_utils.tr_failure);
   end;
   
   procedure test_be_empty_collection is
     l_result         integer;
+    l_assert_results ut_expectation_results;
   begin
-    ut.expect(anydata.convertcollection(ora_mining_varchar2_nt('a'))).to_(be_empty());
+    ut.expect(anydata.convertcollection(ora_mining_varchar2_nt())).to_be_empty;  
+  
+    l_assert_results := ut_expectation_processor.get_expectations_results;
+  
+    ut.expect(anydata.convertcollection(ora_mining_varchar2_nt('a'))).to_be_empty;
     l_result := ut_expectation_processor.get_status;
-    ut_expectation_processor.clear_expectations;
+    restore_asserts(l_assert_results);
     
-    ut.expect(l_result).to_equal(ut_utils.tr_failure);
-    
-    ut.expect(anydata.convertcollection(ora_mining_varchar2_nt())).to_(be_empty());
+    ut.expect(l_result,'Expect collection to be not empty').to_equal(ut_utils.tr_failure);
   end;
   
   procedure test_be_nonempty_collection is
     l_result         integer;
+    l_assert_results ut_expectation_results;
   begin
-    ut.expect(anydata.convertcollection(ora_mining_varchar2_nt())).not_to(be_empty());
+    ut.expect(anydata.convertcollection(ora_mining_varchar2_nt('a'))).not_to_be_empty;  
+  
+    l_assert_results := ut_expectation_processor.get_expectations_results;
+  
+    ut.expect(anydata.convertcollection(ora_mining_varchar2_nt())).not_to_be_empty;
     l_result := ut_expectation_processor.get_status;
-    ut_expectation_processor.clear_expectations;
+    restore_asserts(l_assert_results);
     
-    ut.expect(l_result).to_equal(ut_utils.tr_failure);
-    
-    ut.expect(anydata.convertcollection(ora_mining_varchar2_nt('a'))).not_to(be_empty());
+    ut.expect(l_result,'Expect collection to be empty').to_equal(ut_utils.tr_failure);
   end;
   
   procedure test_be_empty_others is
+    l_var1 ut_data_value_number;
+    l_var2 ut_data_value_number;
   begin
-    ut.expect(anydata.ConvertObject(ut_data_value_number(1))).not_to(be_empty());
-    ut.expect(anydata.ConvertObject(cast(null as ut_data_value_number))).to_(be_empty());
+    l_var1 := ut_data_value_number(1);
+    ut.expect(anydata.ConvertObject(l_var1)).not_to_be_empty;
+    ut.expect(anydata.ConvertObject(l_var2)).to_be_empty;
   end;
   
   procedure test_be_like is
     procedure exec_be_like(a_type varchar2, a_value varchar2, a_pattern varchar2, a_escape varchar2, a_result integer, a_prefix varchar2) is
       l_result integer;
       l_assert_results ut_expectation_results;
-    
     begin
       l_assert_results := ut_expectation_processor.get_expectations_results;
       execute immediate 'declare
@@ -500,6 +519,33 @@ begin ut.expect( l_actual ).'||a_not_prefix||'to_match(l_pattern, l_modifiers); 
     exec_be_like('varchar2(100)', '''Stephen_King''', 'Stephe\__%', '\', ut_utils.tr_success, 'not_');
     exec_be_like('clob', 'rpad(''a'',32767,''a'')||''Stephen_King''', 'a%Ste_en%', '', ut_utils.tr_success, 'not_');
     exec_be_like('clob', 'rpad(''a'',32767,''a'')||''Stephen_King''', 'a%Stephe\__%', '\', ut_utils.tr_success, 'not_');
+  end;
+  
+  procedure test_timestamp_between is
+    l_value timestamp := to_timestamp('1997-01-31 09:26:50.13','YYYY-MM-DD HH24.MI.SS.FF');
+    l_value_lower timestamp := to_timestamp('1997-01-31 09:26:50.11','YYYY-MM-DD HH24.MI.SS.FF');
+    l_value_upper timestamp := to_timestamp('1997-01-31 09:26:50.14','YYYY-MM-DD HH24.MI.SS.FF');
+  begin
+    ut.expect(l_value).to_be_between(l_value_lower, l_value_upper);
+    ut.expect(l_value).not_to_be_between(l_value_upper, l_value_lower);
+  end;
+  
+  procedure test_timestamp_ltz_between is
+    l_value timestamp with local time zone := to_timestamp_tz('1997-01-31 09:26:50.12 +02:00','YYYY-MM-DD HH24.MI.SS.FF TZR');
+    l_value_lower timestamp with local time zone := to_timestamp_tz('1997-01-31 09:26:50.12 +03:00','YYYY-MM-DD HH24.MI.SS.FF TZR');
+    l_value_upper timestamp with local time zone := to_timestamp_tz('1997-01-31 09:26:50.12 +01:00','YYYY-MM-DD HH24.MI.SS.FF TZR');
+  begin
+    ut.expect(l_value).to_be_between(l_value_lower, l_value_upper);
+    ut.expect(l_value).not_to_be_between(l_value_upper, l_value_lower);
+  end;
+  
+  procedure test_timestamp_tz_between is
+    l_value timestamp with time zone := to_timestamp_tz('1997-01-31 09:26:50.12 +02:00','YYYY-MM-DD HH24.MI.SS.FF TZR');
+    l_value_lower timestamp with time zone := to_timestamp_tz('1997-01-31 09:26:50.12 +03:00','YYYY-MM-DD HH24.MI.SS.FF TZR');
+    l_value_upper timestamp with time zone := to_timestamp_tz('1997-01-31 09:26:50.12 +01:00','YYYY-MM-DD HH24.MI.SS.FF TZR');
+  begin
+    ut.expect(l_value).to_be_between(l_value_lower, l_value_upper);
+    ut.expect(l_value).not_to_be_between(l_value_upper, l_value_lower);
   end;
 
 end test_matchers;
