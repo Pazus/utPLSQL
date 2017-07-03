@@ -28,6 +28,9 @@ create or replace package test_matchers is
   --%test
   --%disabled
   procedure test_be_empty_others;
+  
+  --%test
+  procedure test_be_like;
 
 end test_matchers;
 /
@@ -454,6 +457,49 @@ begin ut.expect( l_actual ).'||a_not_prefix||'to_match(l_pattern, l_modifiers); 
   begin
     ut.expect(anydata.ConvertObject(ut_data_value_number(1))).not_to(be_empty());
     ut.expect(anydata.ConvertObject(cast(null as ut_data_value_number))).to_(be_empty());
+  end;
+  
+  procedure test_be_like is
+    procedure exec_be_like(a_type varchar2, a_value varchar2, a_pattern varchar2, a_escape varchar2, a_result integer, a_prefix varchar2) is
+      l_result integer;
+      l_assert_results ut_expectation_results;
+    
+    begin
+      l_assert_results := ut_expectation_processor.get_expectations_results;
+      execute immediate 'declare
+      l_actual    ' || a_type || ' := '||a_value||';
+      l_pattern   varchar2(32767) := :pattern;
+      l_escape_char varchar2(32767) := :a_escape;
+      l_result    integer;
+    begin ut.expect( l_actual ).' || a_prefix ||
+                        q'[to_be_like(l_pattern, l_escape_char);
+      :l_result := ut_expectation_processor.get_status(); end;]'
+        using a_pattern, a_escape, out l_result;
+      restore_asserts(l_assert_results);  
+      ut.expect(l_result
+               ,'expected: ''' || a_value || ''', to be like ''' || a_pattern || ''' escape ''' || a_escape || '''').to_equal(a_result);
+                  
+    end;
+  begin
+    exec_be_like('varchar2(100)', '''Stephen_King''', 'Ste__en%', '', ut_utils.tr_success, '');
+    exec_be_like('varchar2(100)', '''Stephen_King''', 'Ste__en\_K%', '\', ut_utils.tr_success, '');
+    exec_be_like('clob', 'rpad(''a'',32767,''a'')||''Stephen_King''', 'a%Ste__en%', '', ut_utils.tr_success, '');
+    exec_be_like('clob', 'rpad(''a'',32767,''a'')||''Stephen_King''', 'a%Ste__en\_K%', '\', ut_utils.tr_success, '');
+
+    exec_be_like('varchar2(100)', '''Stephen_King''', 'Ste_en%', '', ut_utils.tr_failure, '');
+    exec_be_like('varchar2(100)', '''Stephen_King''', 'Stephe\__%', '\', ut_utils.tr_failure, '');
+    exec_be_like('clob', 'rpad(''a'',32767,''a'')||''Stephen_King''', 'a%Ste_en%', '', ut_utils.tr_failure, '');
+    exec_be_like('clob', 'rpad(''a'',32767,''a'')||''Stephen_King''', 'a%Stephe\__%', '\', ut_utils.tr_failure, '');
+
+    exec_be_like('varchar2(100)', '''Stephen_King''', 'Ste__en%', '', ut_utils.tr_failure, 'not_');
+    exec_be_like('varchar2(100)', '''Stephen_King''', 'Ste__en\_K%', '\', ut_utils.tr_failure, 'not_');
+    exec_be_like('clob', 'rpad(''a'',32767,''a'')||''Stephen_King''', 'a%Ste__en%', '', ut_utils.tr_failure, 'not_');
+    exec_be_like('clob', 'rpad(''a'',32767,''a'')||''Stephen_King''', 'a%Ste__en\_K%', '\', ut_utils.tr_failure, 'not_');
+
+    exec_be_like('varchar2(100)', '''Stephen_King''', 'Ste_en%', '', ut_utils.tr_success, 'not_');
+    exec_be_like('varchar2(100)', '''Stephen_King''', 'Stephe\__%', '\', ut_utils.tr_success, 'not_');
+    exec_be_like('clob', 'rpad(''a'',32767,''a'')||''Stephen_King''', 'a%Ste_en%', '', ut_utils.tr_success, 'not_');
+    exec_be_like('clob', 'rpad(''a'',32767,''a'')||''Stephen_King''', 'a%Stephe\__%', '\', ut_utils.tr_success, 'not_');
   end;
 
 end test_matchers;
