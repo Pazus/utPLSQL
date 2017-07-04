@@ -39,10 +39,25 @@ create or replace package test_ut_utils is
   --%test(Returns a full string representation of a very small number)
   procedure to_string_big_tiny_number;
   
+  --%test(Table to clob function test)
+  procedure test_table_to_clob;
+  
+  --%test(append_to_clob works With Multi Byte Chars)
+  --%beforetest(setup_append_with_multibyte)
+  --%aftertest(clean_append_with_multibyte)
+  procedure test_append_with_multibyte;
+  procedure setup_append_with_multibyte;
+  procedure clean_append_with_multibyte;
+  
+  --%test(clob_to_table multibyte)
+  procedure test_clob_to_table_multibyte;
+  
 
 end test_ut_utils;
 /
 create or replace package body test_ut_utils is
+
+  gv_nls_value nls_session_parameters.value%type;
 
   procedure common_clob_to_table_exec(p_clob varchar2, p_delimiter varchar2, p_expected_list ut_varchar2_list, p_limit number) is
   begin
@@ -256,6 +271,76 @@ end;]' using p_expected_list;
   --Assert
     ut.expect(l_result).TO_equal(l_expected);
 
+  end;
+  
+  procedure test_table_to_clob is
+    procedure exec_table_to_clob(a_list ut_varchar2_list, a_delimiter varchar2, a_expected clob) is
+      l_result clob;
+    begin
+      l_result := ut_utils.table_to_clob(a_list, a_delimiter);
+    
+      ut.expect(l_result).to_equal(a_expected, a_nulls_are_equal => true);
+    end;
+  begin
+    exec_table_to_clob(null, ',', '');
+    exec_table_to_clob(ut_varchar2_list(), ',', '');
+    exec_table_to_clob(ut_varchar2_list('a', 'b', 'c', 'd'), ',', 'a,b,c,d');
+    exec_table_to_clob(ut_varchar2_list('1,b,', 'c,d'), ',', '1,b,,c,d');
+    exec_table_to_clob(ut_varchar2_list('', 'a', '', 'c', 'd', ''), ',', ',a,,c,d,');
+  end;
+
+  procedure test_append_with_multibyte is
+    l_lines   sys.dbms_preprocessor.source_lines_t;
+    l_result  clob;
+  begin
+    l_lines := sys.dbms_preprocessor.get_post_processed_source(
+      object_type => 'PACKAGE',
+      schema_name => user,
+      object_name => 'TST_CHARS'
+    );
+
+    for i in 1..l_lines.count loop
+      l_result := null;
+      ut_utils.append_to_clob(l_result, l_lines(i));
+
+      --Assert
+      ut.expect(dbms_lob.getlength(l_result),'Error for index '||i).to_equal(dbms_lob.getlength(l_lines(i)));
+    end loop;
+  end;
+
+  procedure setup_append_with_multibyte is
+    pragma autonomous_transaction;
+  begin
+    select value into gv_nls_value from nls_session_parameters where parameter = 'NLS_DATE_LANGUAGE';
+    execute immediate 'alter session set nls_date_language=ENGLISH';
+    execute immediate 'create or replace package tst_chars as
+--                 2) Status of the process = ‘PE’ with no linked data
+end;';
+    execute immediate 'alter session set nls_date_language=RUSSIAN';
+
+  end;
+  procedure clean_append_with_multibyte is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'alter session set nls_date_language='||gv_nls_value;
+    execute immediate 'drop package tst_chars';
+  end;
+  
+  procedure test_clob_to_table_multibyte is
+    l_varchar2_byte_limit integer := 32767;
+    l_workaround_byte_limit integer := 8191;
+    l_singlebyte_string_max_size varchar2(32767 char) := rpad('x',l_varchar2_byte_limit,'x');
+    l_twobyte_character char(1 char) := 'æ';
+    l_clob_multibyte clob := l_twobyte_character||l_singlebyte_string_max_size; --here we have 32769(2+32767) bytes and 32768 chars
+    l_expected ut_varchar2_list := ut_varchar2_list();
+    l_result   ut_varchar2_list;
+  begin
+    l_expected.extend(1);
+    l_expected(1) := l_twobyte_character||substr(l_singlebyte_string_max_size,1,l_workaround_byte_limit-1);
+  --Act
+    l_result :=  ut_utils.clob_to_table(l_clob_multibyte);
+  --Assert
+    ut.expect(l_result(1)).to_equal(l_expected(1));
   end;
 
 end test_ut_utils;

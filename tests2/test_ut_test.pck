@@ -35,7 +35,7 @@ create or replace package test_ut_test is
   --%test(Ignore test by disabled flag)
   procedure ignode_disabled_test;
   
-  --%test(Checks that rollback exception doesn't make run to fail)
+  --%test(Checks that rollback exception does not make run to fail)
   procedure rollback_doesnt_fail;
   
   --%test(Reports error when test owner name for a test is invalid)
@@ -104,11 +104,6 @@ create or replace package test_ut_test is
   --%beforetest(setup_output_test_pkg)
   --%aftertest(drop_output_test_pkg)
   procedure output_gathering;
-  
-  --%test(Check dbms_output is gathered for Teamcity reporter)
-  --%beforetest(setup_output_test_pkg)
-  --%aftertest(drop_output_test_pkg)
-  procedure output_gathering_for_teamcity;
   
   procedure setup_output_test_pkg;
   procedure drop_output_test_pkg;
@@ -613,24 +608,6 @@ end;';
     end loop;
     
     ut.expect(l_output).to_be_like('%<!beforeall!>%<!beforeeach!>%<!beforetest!>%<!thetest!>%<!aftertest!>%<!aftereach!>%<!afterall!>%1 tests, 0 failed, 0 errored%');
-  end;
-  
-  
-  procedure output_gathering_for_teamcity is
-    l_output_data       dbms_output.chararr;
-    l_num_lines         integer := 100000;
-    l_output            clob;
-  begin
-    --act
-    ut.run('ut_output_tests',ut_teamcity_reporter);
-
-    --assert
-    dbms_output.get_lines( l_output_data, l_num_lines);
-    dbms_lob.createtemporary(l_output,true);
-    for i in 1 .. l_num_lines loop
-      dbms_lob.append(l_output,l_output_data(i));
-    end loop;
-    ut.expect(l_output).to_be_like('%##teamcity[testStarted%<!beforeeach!>%<!beforetest!>%<!thetest!>%<!aftertest!>%<!aftereach!>%##teamcity[testFinished%');
   end;
   
   procedure empty_test_output is
