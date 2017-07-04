@@ -71,10 +71,70 @@ create or replace package test_suite_manager is
   procedure test_search_invalid_pck;
   procedure compile_invalid_package;
   procedure drop_invalid_package;
+  
+  --%test(Test description with comma)
+  --%beforetest(setup_desc_with_comma)
+  --%aftertest(clean_desc_with_comma)  
+  procedure test_desc_with_comma;
+  procedure setup_desc_with_comma;
+  procedure clean_desc_with_comma;
+  
+  --%test(Invalidate cache on package drop)
+  --%beforetest(setup_inv_cache_on_drop)
+  --%aftertest(clean_inv_cache_on_drop)  
+  procedure test_inv_cache_on_drop;
+  procedure setup_inv_cache_on_drop;
+  procedure clean_inv_cache_on_drop;
+
+  --%test(Includes Invalid Package Bodies In The Run)
+  --%beforetest(setup_inv_pck_bodies)
+  --%aftertest(clean_inv_pck_bodies)  
+  procedure test_inv_pck_bodies;
+  procedure setup_inv_pck_bodies;
+  procedure clean_inv_pck_bodies;
+  
+  --%test(Package With Dollar Sign)
+  --%beforetest(setup_pck_with_dollar)
+  --%aftertest(clean_pck_with_dollar)  
+  procedure test_pck_with_dollar;
+  procedure setup_pck_with_dollar;
+  procedure clean_pck_with_dollar;
+  
+  --%test(Package With Hash Sign)
+  --%beforetest(setup_pck_with_hash)
+  --%aftertest(clean_pck_with_hash)  
+  procedure test_pck_with_hash;
+  procedure setup_pck_with_hash;
+  procedure clean_pck_with_hash;
+  
+  --%test(Package with test with dollar sign)
+  --%beforetest(setup_test_with_dollar)
+  --%aftertest(clean_test_with_dollar)  
+  procedure test_test_with_dollar;
+  procedure setup_test_with_dollar;
+  procedure clean_test_with_dollar;
+  
+  --%test(Package with test with hash sign)
+  --%beforetest(setup_test_with_hash)
+  --%aftertest(clean_test_with_hash)  
+  procedure test_test_with_hash;
+  procedure setup_test_with_hash;
+  procedure clean_test_with_hash;
+  
+  
+  --%test(Setup suite with empty suitepath)
+  --%beforetest(setup_empty_suite_path)
+  --%aftertest(clean_empty_suite_path)  
+  procedure test_empty_suite_path;
+  procedure setup_empty_suite_path;
+  procedure clean_empty_suite_path;
 
 end test_suite_manager;
 /
 create or replace package body test_suite_manager is
+
+  ex_obj_doesnt_exist exception;
+  pragma exception_init(ex_obj_doesnt_exist, -04043);
 
   procedure test_schema_run is
     c_path           constant varchar2(100) := USER;
@@ -725,6 +785,344 @@ end;]';
   begin
     execute immediate 'drop package failing_invalid_spec';
   end;
+  
+  procedure test_desc_with_comma is
+    l_objects_to_run ut_suite_items;
+    l_suite          ut_suite;
+    l_test           ut_test;
+  begin
+    l_objects_to_run := ut_suite_manager.configure_execution_by_path(ut_varchar2_list('tst_package_to_be_dropped'));
+
+    --Assert
+    ut.expect(l_objects_to_run.count).to_equal(1);
+
+    l_suite := treat(l_objects_to_run(1) as ut_suite);
+
+    ut.expect(l_suite.name).to_equal('tst_package_to_be_dropped');
+    ut.expect(l_suite.description).to_equal('A suite description, though with comma, is assigned by suite_manager');
+    ut.expect(l_suite.items.count).to_equal(2);
+
+    l_test := treat(l_suite.items(1) as ut_test);
+
+    ut.expect(l_test.name).to_equal('test1');
+    ut.expect(l_test.description).to_equal('A test description, though with comma, is assigned by suite_manager');
+
+    l_test := treat(l_suite.items(2) as ut_test);
+
+    ut.expect(l_test.name).to_equal('test2');
+    ut.expect(l_test.description).to_equal('A test description, though with comma, is assigned by suite_manager');
+
+  end;
+  procedure setup_desc_with_comma is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'create or replace package tst_package_to_be_dropped as
+  --%suite(A suite description, though with comma, is assigned by suite_manager)
+
+  --%test(A test description, though with comma, is assigned by suite_manager)
+  procedure test1;
+
+  --%test
+  --%displayname(A test description, though with comma, is assigned by suite_manager)
+  procedure test2;
+end;';
+
+    execute immediate 'create or replace package body tst_package_to_be_dropped as
+  procedure test1 is begin ut.expect(1).to_equal(1); end;
+  procedure test2 is begin ut.expect(1).to_equal(1); end;
+end;';
+  end;
+  procedure clean_desc_with_comma is
+    pragma autonomous_transaction;
+  begin
+    begin
+      execute immediate 'drop package tst_package_to_be_dropped';
+    exception
+      when ex_obj_doesnt_exist then
+        null;
+    end;
+  end;
+  
+  procedure test_inv_cache_on_drop is
+    l_test_report ut_varchar2_list;
+  begin
+    
+    select * bulk collect into l_test_report from table(ut.run(USER||'.tst_package_to_be_dropped'));
+
+    -- drop package
+    clean_inv_cache_on_drop;    
+
+    begin
+      select * bulk collect into l_test_report from table(ut.run(user || '.tst_package_to_be_dropped'));
+      ut.fail('Cache not invalidated on package drop');
+    exception
+      when others then
+        ut.expect(sqlerrm).to_be_like('%tst_package_to_be_dropped%does not exist%');
+    end;
+    
+  end;
+  procedure setup_inv_cache_on_drop is 
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'create or replace package tst_package_to_be_dropped as
+  --%suite
+
+  --%test
+  procedure test1;
+end;';
+
+    execute immediate 'create or replace package body tst_package_to_be_dropped as
+  procedure test1 is begin ut.expect(1).to_equal(1); end;
+  procedure test2 is begin ut.expect(1).to_equal(1); end;
+end;';
+  end;
+    
+  procedure clean_inv_cache_on_drop is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'drop package tst_package_to_be_dropped';
+  exception
+    when ex_obj_doesnt_exist then
+      null;
+  end;
+  
+  procedure test_inv_pck_bodies is
+    l_result integer;
+  begin
+    execute immediate 'select * from table(ut.run(''test_dependencies'', utplsql_test_reporter()))' into l_result;
+    
+    ut.expect(l_result).to_equal(ut_utils.tr_success);
+  end;
+  procedure setup_inv_pck_bodies is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'create table test_dependency_table (id integer)';
+    execute immediate 'create or replace package test_dependencies as
+  -- %suite
+
+  -- %test
+  procedure dependant;
+end;';
+    execute immediate 'create or replace package body test_dependencies as
+  gc_dependant_variable test_dependency_table.id%type;
+  procedure dependant is begin null; end;
+end;';
+
+    execute immediate 'alter table test_dependency_table modify id number';
+    
+    execute immediate 'create or replace type utplsql_test_reporter under ut_reporter_base(
+  constructor function utplsql_test_reporter(self in out nocopy utplsql_test_reporter) return self as result,
+  overriding member procedure after_calling_run(self in out nocopy utplsql_test_reporter, a_run in ut_run))';
+    execute immediate 'create or replace type body utplsql_test_reporter is
+  constructor function utplsql_test_reporter(self in out nocopy utplsql_test_reporter) return self as result is
+  begin
+    self.init($$plsql_unit);
+    return;
+  end;
+
+  overriding member procedure after_calling_run(self in out nocopy utplsql_test_reporter, a_run in ut_run) is
+  begin
+    self.print_text(a_run.result);
+  end;
+end;';
+
+  end;
+  procedure clean_inv_pck_bodies is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'drop type utplsql_test_reporter';
+    execute immediate 'drop table test_dependency_table';
+    execute immediate 'drop package test_dependencies';
+  end;
+  
+  procedure test_pck_with_dollar is
+    l_objects_to_run ut_suite_items;
+    l_suite          ut_suite;
+  begin
+    --act
+    l_objects_to_run := ut_suite_manager.configure_execution_by_path(ut_varchar2_list('tst_package_with$dollar'));
+      
+    --Assert
+    ut.expect(l_objects_to_run.count).to_equal(1);
+
+    l_suite := treat(l_objects_to_run(1) as ut_suite);
+    ut.expect(l_suite.name).to_equal('tst_package_with$dollar');
+  end;
+  procedure setup_pck_with_dollar is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'create or replace package tst_package_with$dollar as
+  --%suite
+
+  --%test
+  procedure test1;
+end;';
+
+    execute immediate 'create or replace package body tst_package_with$dollar as
+  procedure test1 is begin ut.expect(1).to_equal(1); end;
+  procedure test2 is begin ut.expect(1).to_equal(1); end;
+end;';
+  end;
+  procedure clean_pck_with_dollar is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'drop package tst_package_with$dollar';
+  end;
+  
+  
+  procedure test_pck_with_hash is
+    l_objects_to_run ut_suite_items;
+    l_suite          ut_suite;
+  begin
+    --act
+    l_objects_to_run := ut_suite_manager.configure_execution_by_path(ut_varchar2_list('tst_package_with#hash'));
+      
+    --Assert
+    ut.expect(l_objects_to_run.count).to_equal(1);
+
+    l_suite := treat(l_objects_to_run(1) as ut_suite);
+    ut.expect(l_suite.name).to_equal('tst_package_with#hash');
+  end;
+  procedure setup_pck_with_hash is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'create or replace package tst_package_with#hash as
+  --%suite
+
+  --%test
+  procedure test1;
+end;';
+
+    execute immediate 'create or replace package body tst_package_with#hash as
+  procedure test1 is begin ut.expect(1).to_equal(1); end;
+  procedure test2 is begin ut.expect(1).to_equal(1); end;
+end;';
+  end;
+  procedure clean_pck_with_hash is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'drop package tst_package_with#hash';
+  end;
+  
+  
+  procedure test_test_with_dollar is
+    l_objects_to_run ut_suite_items;
+    l_suite          ut_suite;
+    l_test           ut_test;
+  begin
+    --act
+    l_objects_to_run := ut_suite_manager.configure_execution_by_path(ut_varchar2_list('tst_package_with_dollar_test.test$1'));
+    
+    --Assert
+    ut.expect(l_objects_to_run.count).to_equal(1);
+
+    l_suite := treat(l_objects_to_run(1) as ut_suite);
+
+    ut.expect(l_suite.name).to_equal('tst_package_with_dollar_test');
+    ut.expect(l_suite.items.count).to_equal(1);
+
+    l_test := treat(l_suite.items(1) as ut_test);
+
+    ut.expect(l_test.name).to_equal('test$1');
+
+  end;
+  procedure setup_test_with_dollar is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'create or replace package tst_package_with_dollar_test as
+  --%suite
+
+  --%test
+  procedure test$1;
+end;';
+
+    execute immediate 'create or replace package body tst_package_with_dollar_test as
+  procedure test$1 is begin ut.expect(1).to_equal(1); end;
+end;';
+  end;
+  procedure clean_test_with_dollar is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'drop package tst_package_with_dollar_test';
+  end;
+  
+  procedure test_test_with_hash is
+    l_objects_to_run ut_suite_items;
+    l_suite          ut_suite;
+    l_test           ut_test;
+  begin
+    --act
+    l_objects_to_run := ut_suite_manager.configure_execution_by_path(ut_varchar2_list('tst_package_with_hash_test.test#1'));
+    
+    --Assert
+    ut.expect(l_objects_to_run.count).to_equal(1);
+
+    l_suite := treat(l_objects_to_run(1) as ut_suite);
+
+    ut.expect(l_suite.name).to_equal('tst_package_with_hash_test');
+    ut.expect(l_suite.items.count).to_equal(1);
+
+    l_test := treat(l_suite.items(1) as ut_test);
+
+    ut.expect(l_test.name).to_equal('test#1');
+
+  end;
+  procedure setup_test_with_hash is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'create or replace package tst_package_with_hash_test as
+  --%suite
+
+  --%test
+  procedure test#1;
+end;';
+
+    execute immediate 'create or replace package body tst_package_with_hash_test as
+  procedure test#1 is begin ut.expect(1).to_equal(1); end;
+end;';
+  end;
+  procedure clean_test_with_hash is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'drop package tst_package_with_hash_test';
+  end;
+  
+  procedure test_empty_suite_path is
+    l_objects_to_run ut_suite_items;
+    l_suite          ut_suite;
+  begin
+
+    --act
+    l_objects_to_run := ut_suite_manager.configure_execution_by_path(ut_varchar2_list('tst_empty_suite_path'));
+    
+    --Assert
+    ut.expect(l_objects_to_run.count).to_equal(1);
+
+    l_suite := treat(l_objects_to_run(1) as ut_suite);
+
+    ut.expect(l_suite.name).to_equal('tst_empty_suite_path');
+  end;
+  
+  procedure setup_empty_suite_path is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'create or replace package tst_empty_suite_path as
+  --%suite
+  --%suitepath
+
+  --%test
+  procedure test1;
+end;';
+    execute immediate 'create or replace package body tst_empty_suite_path as
+  procedure test1 is begin ut.expect(1).to_equal(1); end;
+end;';
+  end;
+  
+  procedure clean_empty_suite_path is
+    pragma autonomous_transaction;
+  begin
+    execute immediate 'drop package tst_empty_suite_path';
+  end;
 
   procedure compile_dummy_packages is
     pragma autonomous_transaction;
@@ -732,6 +1130,7 @@ end;]';
     execute immediate q'[create or replace package test_package_1 is
 
   --%suite
+  --%displayname(test_package_1)
   --%suitepath(tests)
 
   gv_glob_val number;
@@ -777,12 +1176,12 @@ end test_package_1;]';
 
   procedure test1 is
   begin
-    ut.expect(gv_var_1).to_equal(1);
+    ut.expect(gv_var_1, 'Some expectation').to_equal(1);
   end;
 
   procedure test2 is
   begin
-    ut.expect(gv_var_1).to_equal(2);
+    ut.expect(gv_var_1, 'Some expectation').to_equal(2);
   end;
 
   procedure test2_setup is
@@ -871,6 +1270,7 @@ end test_package_2;]';
 
   --%suite
   --%suitepath(tests2)
+  --%rollback(auto)
 
   gv_glob_val number;
 
@@ -881,6 +1281,7 @@ end test_package_2;]';
   procedure global_teardown;
 
   --%test
+  --%rollback(auto)
   procedure test1;
 
   --%test

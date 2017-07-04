@@ -32,6 +32,9 @@ create or replace package test_annotations is
 
   --%test(Parse package level annotations with annotation params containing brackets)
   procedure brackets_in_desc;
+  
+  --%test(Test space before annotation params)
+  procedure test_space_Before_Annot_Params;
 
 end test_annotations;
 /
@@ -513,6 +516,37 @@ END;';
     l_ann_param.val := 'Name of suite (including some brackets) and some more text';
     l_expected.package_annotations('suite').params(1) := l_ann_param;
   
+    check_annotation_parsing(l_expected, l_parsing_result);
+  end;
+  
+  procedure test_space_Before_Annot_Params is
+    l_source clob;
+    l_parsing_result ut_annotations.typ_annotated_package;
+    l_expected ut_annotations.typ_annotated_package;
+    l_ann_param ut_annotations.typ_annotation_param;
+
+  begin
+    l_source := 'PACKAGE test_tt AS
+  /*
+  Some comment
+  -- inlined
+  */
+  -- %suite
+  -- %suitepath (all.globaltests)
+
+  procedure foo;
+END;';
+
+  --Act
+    l_parsing_result := ut_annotations.parse_package_annotations(l_source);
+
+  --Assert
+    l_expected.package_annotations('suite').params := cast( null as ut_annotations.tt_annotation_params);
+
+    l_ann_param := null;
+    l_ann_param.val := 'all.globaltests';
+    l_expected.package_annotations('suitepath').params(1) := l_ann_param;
+
     check_annotation_parsing(l_expected, l_parsing_result);
   end;
 
