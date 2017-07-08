@@ -82,6 +82,13 @@ create or replace package ut_runner authid current_user is
     a_coverage_schemes ut_varchar2_list := null, a_source_files ut_varchar2_list, a_test_files ut_varchar2_list,
     a_include_objects ut_varchar2_list := null, a_exclude_objects ut_varchar2_list := null
   );
+  
+  -- To be used from CI and java-API
+  function run(
+    a_paths ut_varchar2_list, a_reporters ut_reporters, a_color_console boolean := false,
+    a_coverage_schemes ut_varchar2_list := null, a_source_file_mappings ut_file_mappings := null, a_test_file_mappings ut_file_mappings := null,
+    a_include_objects ut_varchar2_list := null, a_exclude_objects ut_varchar2_list := null
+  ) return ut_run;
 
 end ut_runner;
 /

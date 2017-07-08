@@ -50,11 +50,11 @@ create or replace package body ut_runner is
     commit;
   end;
 
-  procedure run(
+  function run(
     a_paths ut_varchar2_list, a_reporters ut_reporters, a_color_console boolean := false,
     a_coverage_schemes ut_varchar2_list := null, a_source_file_mappings ut_file_mappings := null, a_test_file_mappings ut_file_mappings := null,
     a_include_objects ut_varchar2_list := null, a_exclude_objects ut_varchar2_list := null
-  ) is
+  ) return ut_run is
     l_items_to_run  ut_run;
     l_listener      ut_event_listener;
     l_coverage_options ut_coverage_options;
@@ -78,6 +78,7 @@ create or replace package body ut_runner is
 
     cleanup_temp_tables;
     ut_output_buffer.close(l_listener.reporters);
+    return l_items_to_run;
   exception
     when others then
       cleanup_temp_tables;
@@ -85,6 +86,19 @@ create or replace package body ut_runner is
       dbms_output.put_line(dbms_utility.format_error_backtrace);
       dbms_output.put_line(dbms_utility.format_error_stack);
       raise;
+  end;
+  
+  procedure run(a_paths ut_varchar2_list, a_reporters ut_reporters, a_color_console boolean := false, a_coverage_schemes ut_varchar2_list := null, a_source_file_mappings ut_file_mappings := null, a_test_file_mappings ut_file_mappings := null, a_include_objects ut_varchar2_list := null, a_exclude_objects ut_varchar2_list := null) is
+    l_run ut_run;
+  begin
+    l_run := run(a_paths
+                ,a_reporters
+                ,a_color_console
+                ,a_coverage_schemes
+                ,a_source_file_mappings
+                ,a_test_file_mappings
+                ,a_include_objects
+                ,a_exclude_objects);
   end;
 
   procedure run(
