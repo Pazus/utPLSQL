@@ -1,13 +1,18 @@
 prompt Installing test packages
-@@test_annotations.pck
 
+set trimspool on
+set echo off
+set feedback off
+set verify off
 set linesize 32767
 set pagesize 0
 set long 200000000
 set longchunksize 1000000
 set serveroutput on size unlimited format truncated
-var l_result number;
 
+@@test_annotations.pck
+
+var l_result number;
 declare 
   l_run ut_run;
   l_reporter ut_documentation_reporter := ut_documentation_reporter();
