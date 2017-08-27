@@ -216,6 +216,7 @@ create or replace package body ut_suite_manager is
 
     l_object_names t_object_names;
     l_view_name      varchar2(200) := ut_metadata.get_dba_view('dba_objects');
+    l_sources_view_name      varchar2(200) := ut_metadata.get_dba_view('dba_source');
 
     l_schema_suites tt_schema_suites;
 
@@ -283,7 +284,8 @@ create or replace package body ut_suite_manager is
     -- form the single-dimension list of suites constructed from parsed packages
     execute immediate
       'select t.owner, t.object_name from '||l_view_name||' t '
-      ||q'[ where t.owner = :a_owner_name and t.status = 'VALID' and t.object_type in ('PACKAGE')]'
+      ||q'[ where t.owner = :a_owner_name and t.status = 'VALID' and t.object_type in ('PACKAGE')
+      and (t.owner, t.object_name, t.object_type) in (select owner, name, type from ]'||l_sources_view_name||q'[ s where lower(text) like '%\%suite%' escape '\')]'
       bulk collect into l_object_names using a_owner_name;
     for i in 1 .. cardinality(l_object_names) loop
       -- parse the source of the package
